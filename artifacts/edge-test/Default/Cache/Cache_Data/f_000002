@@ -1,0 +1,1665 @@
+(function () {
+  "use strict";
+
+  const config = window.SITE_CONFIG || {};
+  const root = document.documentElement;
+  const body = document.body;
+  const heroTrack = document.querySelector(".hero-track");
+  const hero = document.getElementById("hero");
+  const ambientCanvas = document.getElementById("ambient-field");
+  const canvas = document.getElementById("particle-field");
+  const staticFieldCanvas = document.createElement("canvas");
+  const ambientContext = ambientCanvas.getContext("2d", { alpha: true });
+  const context = canvas.getContext("2d", { alpha: true });
+  const sceneTwo = document.getElementById("scene-two");
+  const semanticStage = document.getElementById("semantic-stage");
+  const semanticCanvas = document.getElementById("semantic-field");
+  const semanticContext = semanticCanvas.getContext("2d", { alpha: true });
+  const semanticLens = document.getElementById("semantic-lens");
+  const semanticTerms = Array.from(document.querySelectorAll(".semantic-terms span"));
+  const sceneThree = document.getElementById("scene-three");
+  const orbitStage = document.getElementById("orbit-stage");
+  const orbitCanvas = document.getElementById("orbit-field");
+  const orbitContext = orbitCanvas.getContext("2d", { alpha: true });
+  const orbitLetter = document.querySelector(".orbit-title__letter");
+  const orbitTail = document.querySelector(".orbit-title__tail");
+  const orbitNavigation = document.getElementById("orbit-navigation");
+  const orbitNavToggle = document.getElementById("orbit-nav-toggle");
+  const orbitNavPanel = document.getElementById("site-navigation");
+  const orbitNavHint = document.querySelector(".orbit-nav__hint");
+  const orbitNavLinks = Array.from(document.querySelectorAll(".orbit-nav__links a"));
+  const sceneFour = document.getElementById("work");
+  const workStage = document.getElementById("work-stage");
+  const workCanvas = document.getElementById("work-field");
+  const workContext = workCanvas.getContext("2d", { alpha: true });
+  const workChapters = Array.from(document.querySelectorAll("[data-work-step]"));
+  const workMarkers = Array.from(document.querySelectorAll("[data-work-marker]"));
+  const workInstrumentLabel = document.querySelector(".work-instrument__label");
+  const cursorElement = document.getElementById("cursor");
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+  const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)");
+  const words = [
+    "search", "intent", "index", "relevance", "signal", "query", "authority",
+    "content", "context", "crawl", "trust", "brand", "algorithm", "semantic",
+    "canonical", "schema", "position", "ranking", "data", "serp", "<title>",
+    "/robots.txt", "https://", "hreflang", "link", "topic", "entity"
+  ];
+  const orbitBands = [
+    { rx: 0.19, ry: 0.075, rotation: -0.18, speed: 0.19, direction: 1, start: 0.22, end: 5.36 },
+    { rx: 0.27, ry: 0.115, rotation: 0.14, speed: 0.12, direction: -1, start: 1.04, end: 6.02 },
+    { rx: 0.36, ry: 0.165, rotation: -0.09, speed: 0.082, direction: 1, start: 2.18, end: 6.13 },
+    { rx: 0.47, ry: 0.245, rotation: 0.21, speed: 0.052, direction: -1, start: -0.34, end: 4.62 },
+    { rx: 0.59, ry: 0.32, rotation: -0.13, speed: 0.036, direction: 1, start: 0.72, end: 5.71 }
+  ];
+
+  let width = 0;
+  let height = 0;
+  let dpr = 1;
+  let particles = [];
+  let fragments = [];
+  let swarm = [];
+  let semanticParticles = [];
+  let orbitParticles = [];
+  let workParticles = [];
+  let rafId = 0;
+  let startTime = 0;
+  let lastFrame = 0;
+  let targetScroll = 0;
+  let smoothScroll = 0;
+  let targetSceneScroll = 0;
+  let smoothSceneScroll = 0;
+  let targetSceneEntry = 0;
+  let smoothSceneEntry = 0;
+  let targetOrbitScroll = 0;
+  let smoothOrbitScroll = 0;
+  let targetOrbitEntry = 0;
+  let smoothOrbitEntry = 0;
+  let targetWorkScroll = 0;
+  let smoothWorkScroll = 0;
+  let targetWorkEntry = 0;
+  let smoothWorkEntry = 0;
+  let heroVisible = true;
+  let sceneVisible = false;
+  let orbitVisible = false;
+  let workVisible = false;
+  let pageVisible = true;
+  let navigationOpen = false;
+  let logoDocked = false;
+  const orbitLogoTarget = { x: window.innerWidth * 0.5, y: window.innerHeight * 0.5 };
+
+  const pointer = {
+    x: window.innerWidth * 0.72,
+    y: window.innerHeight * 0.58,
+    tx: window.innerWidth * 0.72,
+    ty: window.innerHeight * 0.58,
+    px: window.innerWidth * 0.72,
+    py: window.innerHeight * 0.58,
+    active: false,
+    lastMove: 0
+  };
+
+  function applyConfig() {
+    document.querySelectorAll("[data-config]").forEach((element) => {
+      const value = config[element.dataset.config];
+      if (typeof value !== "string") return;
+
+      if (element.dataset.config === "heroCopy") {
+        element.innerHTML = value.split("\n").map(escapeHtml).join("<br>");
+      } else if (element.dataset.config === "sceneThreeTitle") {
+        const title = value.trim().toUpperCase() || "ORBIT";
+        const letter = element.querySelector(".orbit-title__letter");
+        const tail = element.querySelector(".orbit-title__tail");
+        if (letter && tail) {
+          letter.textContent = title.slice(0, 1);
+          letter.dataset.text = title.slice(0, 1);
+          tail.textContent = title.slice(1);
+          tail.dataset.text = title.slice(1);
+          const heading = element.closest(".orbit-title");
+          if (heading) heading.setAttribute("aria-label", `Be ${title}`);
+        }
+      } else {
+        element.textContent = value;
+        if (element.hasAttribute("data-text")) element.dataset.text = value;
+      }
+    });
+
+    document.querySelectorAll("[data-config-href]").forEach((element) => {
+      const value = config[element.dataset.configHref];
+      if (typeof value === "string" && value.trim()) element.setAttribute("href", value.trim());
+    });
+
+    workChapters.forEach((chapter) => {
+      const title = chapter.querySelector("h3");
+      if (title) title.dataset.echo = title.textContent.trim();
+    });
+  }
+
+  function escapeHtml(value) {
+    const node = document.createElement("span");
+    node.textContent = value;
+    return node.innerHTML;
+  }
+
+  function clamp(value, min, max) {
+    return Math.min(max, Math.max(min, value));
+  }
+
+  function mix(from, to, amount) {
+    return from + (to - from) * amount;
+  }
+
+  function smoothstep(edge0, edge1, value) {
+    const amount = clamp((value - edge0) / (edge1 - edge0), 0, 1);
+    return amount * amount * (3 - 2 * amount);
+  }
+
+  function mulberry32(seed) {
+    return function random() {
+      let value = seed += 0x6D2B79F5;
+      value = Math.imul(value ^ value >>> 15, value | 1);
+      value ^= value + Math.imul(value ^ value >>> 7, value | 61);
+      return ((value ^ value >>> 14) >>> 0) / 4294967296;
+    };
+  }
+
+  function sampleTextEdges() {
+    const mask = document.createElement("canvas");
+    const maskContext = mask.getContext("2d", { willReadFrequently: true });
+    const scale = width > 900 ? 0.54 : 0.66;
+    mask.width = Math.max(1, Math.floor(width * scale));
+    mask.height = Math.max(1, Math.floor(height * scale));
+    maskContext.scale(scale, scale);
+    maskContext.fillStyle = "#fff";
+    maskContext.textBaseline = "top";
+    maskContext.textAlign = "left";
+
+    document.querySelectorAll(".headline__line").forEach((line) => {
+      const rect = line.getBoundingClientRect();
+      const style = getComputedStyle(line);
+      maskContext.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+      if ("letterSpacing" in maskContext) maskContext.letterSpacing = style.letterSpacing;
+      maskContext.fillText(line.firstChild.textContent.trim(), rect.left, rect.top - parseFloat(style.fontSize) * 0.055);
+    });
+
+    const pixels = maskContext.getImageData(0, 0, mask.width, mask.height).data;
+    const points = [];
+    const stride = width > 900 ? 4 : 3;
+    const radius = Math.max(2, Math.round(3 * scale));
+
+    for (let y = radius; y < mask.height - radius; y += stride) {
+      for (let x = radius; x < mask.width - radius; x += stride) {
+        const alpha = pixels[(y * mask.width + x) * 4 + 3];
+        if (alpha < 90) continue;
+        const left = pixels[(y * mask.width + x - radius) * 4 + 3];
+        const right = pixels[(y * mask.width + x + radius) * 4 + 3];
+        const above = pixels[((y - radius) * mask.width + x) * 4 + 3];
+        const below = pixels[((y + radius) * mask.width + x) * 4 + 3];
+        if (left < 45 || right < 45 || above < 45 || below < 45) {
+          points.push({ x: x / scale, y: y / scale });
+        }
+      }
+    }
+
+    return points;
+  }
+
+  function buildField() {
+    const random = mulberry32(7142026);
+    const edgePoints = sampleTextEdges();
+    const isMobile = width < 700;
+    const memory = navigator.deviceMemory || 8;
+    const targetCount = reducedMotion.matches
+      ? Math.min(130, edgePoints.length)
+      : Math.min(edgePoints.length, isMobile ? 300 : memory <= 4 ? 520 : 680);
+
+    particles = new Array(targetCount);
+    for (let index = 0; index < targetCount; index += 1) {
+      const point = edgePoints[Math.floor((index / targetCount) * edgePoints.length)] || { x: width / 2, y: height / 2 };
+      const fromLeft = random() < 0.53;
+      const lane = random();
+      const startX = reducedMotion.matches
+        ? point.x
+        : fromLeft ? -width * (0.05 + random() * 0.3) : width * (1.04 + random() * 0.28);
+      const startY = reducedMotion.matches
+        ? point.y
+        : height * (0.18 + lane * 0.67) + Math.sin(lane * Math.PI * 4) * height * 0.08;
+      const accent = random() > 0.925;
+
+      particles[index] = {
+        x: startX,
+        y: startY,
+        ox: startX,
+        oy: startY,
+        px: startX,
+        py: startY,
+        tx: point.x,
+        ty: point.y,
+        phase: random() * Math.PI * 2,
+        depth: 0.35 + random() * 0.65,
+        size: 0.35 + random() * 1.25,
+        delay: random() * 2.25,
+        accent,
+        stream: random() > 0.7,
+        drift: random() * 2 - 1
+      };
+    }
+
+    const swarmCount = reducedMotion.matches
+      ? isMobile ? 280 : 520
+      : isMobile ? 310 : memory <= 4 ? 420 : 520;
+    swarm = new Array(swarmCount);
+    for (let index = 0; index < swarmCount; index += 1) {
+      const familyRoll = random();
+      const family = familyRoll < 0.52 ? 0 : familyRoll < 0.78 ? 1 : familyRoll < 0.93 ? 2 : 3;
+      swarm[index] = {
+        family,
+        u: random(),
+        lane: random() * 2 - 1,
+        phase: random() * Math.PI * 2,
+        speed: 0.012 + random() * 0.034,
+        depth: 0.25 + random() * 0.75,
+        size: 0.34 + Math.pow(random(), 2.15) * 2.05,
+        alpha: 0.28 + random() * 0.55,
+        accent: family === 2 ? random() > 0.24 : random() > 0.925,
+        spark: random() > 0.965,
+        delay: random() * 3.2,
+        x: NaN,
+        y: NaN,
+        px: NaN,
+        py: NaN
+      };
+    }
+
+    const fragmentCount = reducedMotion.matches ? 24 : isMobile ? 42 : 72;
+    fragments = new Array(fragmentCount);
+    for (let index = 0; index < fragmentCount; index += 1) {
+      const label = random() > 0.6 ? words[Math.floor(random() * words.length)] : String.fromCharCode(97 + Math.floor(random() * 26));
+      fragments[index] = {
+        x: width * (0.05 + random() * 0.92),
+        y: height * (0.08 + random() * 0.84),
+        baseY: height * (0.08 + random() * 0.84),
+        phase: random() * Math.PI * 2,
+        speed: 0.25 + random() * 0.7,
+        alpha: 0.18 + random() * 0.48,
+        size: (isMobile ? 6 : 7) + random() * (isMobile ? 6 : 9),
+        label,
+        accent: random() > 0.84,
+        delay: 0.9 + random() * 4.3,
+        depth: 0.25 + random() * 0.75,
+        orbit: random() > 0.28 ? random() * 2 - 1 : 0
+      };
+    }
+  }
+
+  function sampleSemanticEdges() {
+    if (!semanticStage) return [];
+    const mask = document.createElement("canvas");
+    const maskContext = mask.getContext("2d", { willReadFrequently: true });
+    const scale = width > 900 ? 0.5 : 0.64;
+    const stageRect = semanticStage.getBoundingClientRect();
+    mask.width = Math.max(1, Math.floor(width * scale));
+    mask.height = Math.max(1, Math.floor(height * scale));
+    maskContext.scale(scale, scale);
+    maskContext.fillStyle = "#000";
+    maskContext.textBaseline = "top";
+    maskContext.textAlign = "left";
+
+    document.querySelectorAll(".semantic-title__word").forEach((word) => {
+      const rect = word.getBoundingClientRect();
+      const style = getComputedStyle(word);
+      maskContext.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+      if ("letterSpacing" in maskContext) maskContext.letterSpacing = style.letterSpacing;
+      if ("fontStretch" in maskContext) maskContext.fontStretch = style.fontStretch;
+      maskContext.fillText(
+        word.textContent.trim(),
+        rect.left - stageRect.left,
+        rect.top - stageRect.top - parseFloat(style.fontSize) * 0.05
+      );
+    });
+
+    const pixels = maskContext.getImageData(0, 0, mask.width, mask.height).data;
+    const points = [];
+    const stride = width > 900 ? 4 : 3;
+    const radius = Math.max(2, Math.round(3 * scale));
+
+    for (let y = radius; y < mask.height - radius; y += stride) {
+      for (let x = radius; x < mask.width - radius; x += stride) {
+        const alpha = pixels[(y * mask.width + x) * 4 + 3];
+        if (alpha < 80) continue;
+        const left = pixels[(y * mask.width + x - radius) * 4 + 3];
+        const right = pixels[(y * mask.width + x + radius) * 4 + 3];
+        const above = pixels[((y - radius) * mask.width + x) * 4 + 3];
+        const below = pixels[((y + radius) * mask.width + x) * 4 + 3];
+        if (left < 40 || right < 40 || above < 40 || below < 40) {
+          points.push({ x: x / scale, y: y / scale });
+        }
+      }
+    }
+
+    return points;
+  }
+
+  function buildSemanticField() {
+    if (!semanticStage) return;
+    const random = mulberry32(28082026);
+    const edgePoints = sampleSemanticEdges();
+    const isMobile = width < 700;
+    const memory = navigator.deviceMemory || 8;
+    const count = reducedMotion.matches
+      ? isMobile ? 150 : 230
+      : isMobile ? 520 : memory <= 4 ? 720 : 1080;
+
+    semanticParticles = new Array(count);
+    for (let index = 0; index < count; index += 1) {
+      const point = edgePoints.length
+        ? edgePoints[(index * 17 + Math.floor(random() * 11)) % edgePoints.length]
+        : { x: width * 0.5, y: height * 0.48 };
+      const originX = random() * width;
+      const originY = -height * 0.18 + random() * height * 1.28;
+      const stationary = reducedMotion.matches;
+      semanticParticles[index] = {
+        x: stationary ? point.x : originX,
+        y: stationary ? point.y : originY,
+        px: stationary ? point.x : originX,
+        py: stationary ? point.y : originY,
+        ox: originX,
+        oy: originY,
+        tx: point.x,
+        ty: point.y,
+        depth: 0.25 + random() * 0.75,
+        size: 0.42 + Math.pow(random(), 2) * 1.85,
+        alpha: 0.2 + random() * 0.5,
+        phase: random() * Math.PI * 2,
+        speed: 0.25 + random() * 0.8,
+        accent: random() > 0.925,
+        glyph: random() > 0.955 ? words[Math.floor(random() * words.length)] : ""
+      };
+    }
+  }
+
+  function buildOrbitField() {
+    if (!orbitStage) return;
+    const random = mulberry32(31082026);
+    const isMobile = width < 700;
+    const memory = navigator.deviceMemory || 8;
+    const count = reducedMotion.matches
+      ? isMobile ? 210 : 320
+      : isMobile ? 640 : memory <= 4 ? 860 : 1320;
+    const sourceX = width * (isMobile ? 0.95 : 0.92);
+    const sourceY = height * (isMobile ? 0.35 : 0.45);
+
+    orbitParticles = new Array(count);
+    for (let index = 0; index < count; index += 1) {
+      const bandIndex = index % orbitBands.length;
+      const band = orbitBands[bandIndex];
+      const phase = random() * Math.PI * 2;
+      const launchRadius = 10 + Math.pow(random(), 1.8) * Math.min(width, height) * 0.36;
+      const launchAngle = phase + (random() - 0.5) * 0.9;
+      const originX = sourceX + Math.cos(launchAngle) * launchRadius;
+      const originY = sourceY + Math.sin(launchAngle) * launchRadius * 0.64;
+
+      orbitParticles[index] = {
+        x: originX,
+        y: originY,
+        px: originX,
+        py: originY,
+        ox: originX,
+        oy: originY,
+        phase,
+        band: bandIndex,
+        radiusJitter: 0.86 + random() * 0.28,
+        speedJitter: 0.72 + random() * 0.56,
+        depth: 0.18 + random() * 0.82,
+        size: 0.36 + Math.pow(random(), 2.1) * 1.95,
+        alpha: 0.16 + random() * 0.58,
+        accent: random() > 0.91,
+        glyph: random() > 0.958 ? words[Math.floor(random() * words.length)] : "",
+        phaseOffset: (random() - 0.5) * 0.22,
+        bandSpeed: band.speed * band.direction
+      };
+    }
+  }
+
+  function buildWorkField() {
+    if (!workStage) return;
+    const random = mulberry32(4082026);
+    const isMobile = width < 700;
+    const memory = navigator.deviceMemory || 8;
+    const count = reducedMotion.matches
+      ? isMobile ? 90 : 140
+      : isMobile ? 260 : memory <= 4 ? 360 : 520;
+
+    workParticles = new Array(count);
+    for (let index = 0; index < count; index += 1) {
+      const originX = width * (0.07 + random() * 0.9);
+      const originY = height * (0.1 + random() * 0.82);
+      workParticles[index] = {
+        x: originX,
+        y: originY,
+        px: originX,
+        py: originY,
+        originX,
+        originY,
+        seedX: random(),
+        seedY: random(),
+        phase: random() * Math.PI * 2,
+        depth: 0.22 + random() * 0.78,
+        size: 0.38 + Math.pow(random(), 2.2) * 1.7,
+        alpha: 0.13 + random() * 0.48,
+        speed: 0.35 + random() * 0.85,
+        accent: random() > 0.915,
+        glyph: random() > 0.965 ? words[Math.floor(random() * words.length)] : ""
+      };
+    }
+  }
+
+  function resize() {
+    width = window.innerWidth;
+    height = window.innerHeight;
+    dpr = Math.min(window.devicePixelRatio || 1, width < 700 ? 1.25 : 1.45);
+    canvas.width = Math.round(width * dpr);
+    canvas.height = Math.round(height * dpr);
+    ambientCanvas.width = Math.round(width * dpr);
+    ambientCanvas.height = Math.round(height * dpr);
+    semanticCanvas.width = Math.round(width * dpr);
+    semanticCanvas.height = Math.round(height * dpr);
+    orbitCanvas.width = Math.round(width * dpr);
+    orbitCanvas.height = Math.round(height * dpr);
+    workCanvas.width = Math.round(width * dpr);
+    workCanvas.height = Math.round(height * dpr);
+    canvas.style.width = `${width}px`;
+    canvas.style.height = `${height}px`;
+    ambientCanvas.style.width = `${width}px`;
+    ambientCanvas.style.height = `${height}px`;
+    semanticCanvas.style.width = `${width}px`;
+    semanticCanvas.style.height = `${height}px`;
+    orbitCanvas.style.width = `${width}px`;
+    orbitCanvas.style.height = `${height}px`;
+    workCanvas.style.width = `${width}px`;
+    workCanvas.style.height = `${height}px`;
+    context.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ambientContext.setTransform(dpr, 0, 0, dpr, 0, 0);
+    semanticContext.setTransform(dpr, 0, 0, dpr, 0, 0);
+    orbitContext.setTransform(dpr, 0, 0, dpr, 0, 0);
+    workContext.setTransform(dpr, 0, 0, dpr, 0, 0);
+    buildField();
+    buildStaticField();
+    buildSemanticField();
+    buildOrbitField();
+    buildWorkField();
+    updateScrollTarget();
+  }
+
+  function updateScrollTarget() {
+    if (!heroTrack) return;
+    const rect = heroTrack.getBoundingClientRect();
+    const travel = Math.max(1, rect.height - height);
+    targetScroll = clamp(-rect.top / travel, 0, 1);
+    heroVisible = rect.bottom > 0 && rect.top < height;
+
+    if (sceneTwo) {
+      const sceneRect = sceneTwo.getBoundingClientRect();
+      const sceneTravel = Math.max(1, sceneRect.height - height);
+      targetSceneScroll = clamp(-sceneRect.top / sceneTravel, 0, 1);
+      targetSceneEntry = clamp(1 - sceneRect.top / height, 0, 1);
+      sceneVisible = sceneRect.top < height && sceneRect.bottom > 0;
+    }
+
+    if (sceneThree) {
+      const orbitRect = sceneThree.getBoundingClientRect();
+      const orbitTravel = Math.max(1, orbitRect.height - height);
+      targetOrbitScroll = clamp(-orbitRect.top / orbitTravel, 0, 1);
+      targetOrbitEntry = clamp(1 - orbitRect.top / height, 0, 1);
+      orbitVisible = orbitRect.top < height && orbitRect.bottom > 0;
+    }
+
+    if (sceneFour) {
+      const workRect = sceneFour.getBoundingClientRect();
+      const workTravel = Math.max(1, workRect.height - height);
+      targetWorkScroll = clamp(-workRect.top / workTravel, 0, 1);
+      targetWorkEntry = clamp(1 - workRect.top / height, 0, 1);
+      workVisible = workRect.top < height && workRect.bottom > 0;
+    }
+  }
+
+  function updateDocumentMotion() {
+    smoothScroll = reducedMotion.matches
+      ? targetScroll
+      : smoothScroll + (targetScroll - smoothScroll) * 0.085;
+    smoothSceneScroll = reducedMotion.matches
+      ? targetSceneScroll
+      : smoothSceneScroll + (targetSceneScroll - smoothSceneScroll) * 0.075;
+    smoothSceneEntry = reducedMotion.matches
+      ? targetSceneEntry
+      : smoothSceneEntry + (targetSceneEntry - smoothSceneEntry) * 0.09;
+    smoothOrbitScroll = reducedMotion.matches
+      ? targetOrbitScroll
+      : smoothOrbitScroll + (targetOrbitScroll - smoothOrbitScroll) * 0.072;
+    smoothOrbitEntry = reducedMotion.matches
+      ? targetOrbitEntry
+      : smoothOrbitEntry + (targetOrbitEntry - smoothOrbitEntry) * 0.085;
+    smoothWorkScroll = reducedMotion.matches
+      ? targetWorkScroll
+      : smoothWorkScroll + (targetWorkScroll - smoothWorkScroll) * 0.07;
+    smoothWorkEntry = reducedMotion.matches
+      ? targetWorkEntry
+      : smoothWorkEntry + (targetWorkEntry - smoothWorkEntry) * 0.085;
+    root.style.setProperty("--scroll", smoothScroll.toFixed(4));
+    root.style.setProperty("--headline-y", `${(-smoothScroll * 24).toFixed(3)}vh`);
+    root.style.setProperty("--headline-scale", (1 - smoothScroll * 0.045).toFixed(4));
+    root.style.setProperty("--headline-opacity", clamp(1 - smoothScroll * 0.94, 0, 1).toFixed(4));
+    root.style.setProperty("--atmosphere-opacity", clamp(1 - smoothScroll, 0, 1).toFixed(4));
+    root.style.setProperty("--header-y", `${(-smoothScroll * 18).toFixed(2)}px`);
+    root.style.setProperty("--header-opacity", clamp(1 - smoothScroll * 1.18, 0, 1).toFixed(4));
+
+    const sceneProgress = reducedMotion.matches ? 1 : smoothSceneScroll;
+    const titleReveal = smoothstep(0.22, 0.92, smoothSceneEntry);
+    const scanOne = reducedMotion.matches ? 1 : smoothstep(0.06, 0.43, sceneProgress);
+    const scanTwo = reducedMotion.matches ? 1 : smoothstep(0.27, 0.67, sceneProgress);
+    const scanTravel = smoothstep(0.04, 0.72, sceneProgress);
+    const scanOpacity = reducedMotion.matches
+      ? 0
+      : smoothstep(0.03, 0.12, sceneProgress) * (1 - smoothstep(0.73, 0.86, sceneProgress));
+    const copyOpacity = reducedMotion.matches ? 1 : smoothstep(0.5, 0.75, sceneProgress);
+    const metaOpacity = 0.18 + smoothstep(0.18, 0.84, smoothSceneEntry) * 0.68;
+
+    root.style.setProperty("--scene-progress", sceneProgress.toFixed(4));
+    root.style.setProperty("--scene-title-y", `${((1 - titleReveal) * 42).toFixed(2)}px`);
+    root.style.setProperty("--scene-copy-opacity", copyOpacity.toFixed(4));
+    root.style.setProperty("--scene-copy-y", `${((1 - copyOpacity) * 16).toFixed(2)}px`);
+    root.style.setProperty("--scene-meta-opacity", metaOpacity.toFixed(4));
+    root.style.setProperty("--scan-one-clip", `${((1 - scanOne) * 101).toFixed(3)}%`);
+    root.style.setProperty("--scan-two-clip", `${((1 - scanTwo) * 101).toFixed(3)}%`);
+    root.style.setProperty("--scan-x", `${(-6 + scanTravel * 112).toFixed(3)}%`);
+    root.style.setProperty("--scan-opacity", scanOpacity.toFixed(4));
+
+    const stageRect = semanticStage ? semanticStage.getBoundingClientRect() : null;
+    const stagePinned = stageRect && stageRect.top <= 1 && stageRect.bottom >= height - 1;
+    const orbitStillLight = orbitVisible && smoothOrbitScroll < 0.12;
+    const lightSceneActive = (sceneVisible && smoothSceneEntry > 0.42 && !orbitVisible) || orbitStillLight;
+    const lensActive = lightSceneActive && stagePinned && pointer.active && finePointer.matches && !reducedMotion.matches;
+    body.classList.toggle("is-light-scene", lightSceneActive);
+    root.style.setProperty("--lens-opacity", lensActive ? "1" : "0");
+
+    if (semanticLens && lensActive) {
+      semanticLens.style.left = `${pointer.x}px`;
+      semanticLens.style.top = `${pointer.y}px`;
+    }
+
+    const termTime = reducedMotion.matches ? 0 : performance.now() * 0.001;
+    semanticTerms.forEach((term, index) => {
+      const delay = Number(term.dataset.delay || 0);
+      const reveal = reducedMotion.matches ? 1 : smoothstep(0.19 + delay, 0.38 + delay, sceneProgress);
+      const drift = reducedMotion.matches ? 0 : Math.sin(termTime * 0.37 + index * 1.17) * 2.4;
+      term.style.opacity = (reveal * (0.46 + (index % 3) * 0.13)).toFixed(3);
+      term.style.transform = `translate3d(${((1 - reveal) * (index % 2 ? 28 : -28)).toFixed(2)}px, ${((1 - reveal) * 18 + drift).toFixed(2)}px, 0)`;
+    });
+
+    const orbitProgress = reducedMotion.matches ? 1 : smoothOrbitScroll;
+    const darkReveal = reducedMotion.matches ? 1 : smoothstep(0.045, 0.275, orbitProgress);
+    const eclipseReveal = reducedMotion.matches ? 1 : smoothstep(0.012, 0.285, orbitProgress);
+    const eclipseDiameter = width < 700 ? 22 : 28;
+    const eclipseMaximum = Math.hypot(width, height) * 2.2 / eclipseDiameter;
+    const eclipseScale = mix(0.72, eclipseMaximum, eclipseReveal);
+    const orbitTitleReveal = reducedMotion.matches ? 1 : smoothstep(0.31, 0.49, orbitProgress);
+    const orbitBeReveal = reducedMotion.matches ? 1 : smoothstep(0.34, 0.49, orbitProgress);
+    const orbitWordReveal = reducedMotion.matches ? 1 : smoothstep(0.405, 0.64, orbitProgress);
+    const orbitMetaReveal = reducedMotion.matches ? 1 : smoothstep(0.26, 0.51, orbitProgress);
+    const orbitCopyReveal = reducedMotion.matches ? 1 : smoothstep(0.67, 0.84, orbitProgress);
+    const orbitCrescentIn = reducedMotion.matches ? 1 : smoothstep(0.43, 0.65, orbitProgress);
+    const performanceExit = reducedMotion.matches
+      ? 1 - smoothstep(0.88, 0.95, targetOrbitScroll)
+      : 1 - smoothstep(0.78, 0.95, orbitProgress);
+    const beExitOpacity = reducedMotion.matches ? performanceExit : 1 - smoothstep(0.77, 0.875, orbitProgress);
+    const tailExit = reducedMotion.matches ? performanceExit : 1 - smoothstep(0.8, 0.91, orbitProgress);
+    const oExit = reducedMotion.matches ? performanceExit : 1 - smoothstep(0.845, 0.915, orbitProgress);
+    const logoMorph = reducedMotion.matches
+      ? smoothstep(0.91, 0.95, targetOrbitScroll)
+      : smoothstep(0.835, 0.91, orbitProgress);
+    const logoDockProgress = reducedMotion.matches ? 1 : smoothstep(0.89, 0.995, orbitProgress);
+    const orbitSettle = reducedMotion.matches ? performanceExit : 1 - smoothstep(0.78, 0.95, orbitProgress);
+
+    root.style.setProperty("--eclipse-scale", eclipseScale.toFixed(3));
+    root.style.setProperty("--orbit-dark-opacity", darkReveal.toFixed(4));
+    root.style.setProperty("--orbit-title-opacity", orbitTitleReveal.toFixed(4));
+    root.style.setProperty("--orbit-title-y", `${((1 - orbitTitleReveal) * 36).toFixed(2)}px`);
+    root.style.setProperty("--orbit-be-clip", `${((1 - orbitBeReveal) * 101).toFixed(3)}%`);
+    root.style.setProperty("--orbit-word-clip", `${((1 - orbitWordReveal) * 101).toFixed(3)}%`);
+    root.style.setProperty("--orbit-meta-opacity", (orbitMetaReveal * 0.88 * performanceExit).toFixed(4));
+    root.style.setProperty("--orbit-copy-opacity", (orbitCopyReveal * performanceExit).toFixed(4));
+    root.style.setProperty("--orbit-copy-y", `${((1 - orbitCopyReveal) * 18).toFixed(2)}px`);
+    root.style.setProperty("--orbit-crescent-opacity", (orbitCrescentIn * orbitSettle).toFixed(4));
+    root.style.setProperty("--orbit-crescent-rotation", `${(-17 + orbitProgress * 12).toFixed(2)}deg`);
+    root.style.setProperty("--orbit-be-exit-opacity", beExitOpacity.toFixed(4));
+    root.style.setProperty("--orbit-tail-opacity", tailExit.toFixed(4));
+    root.style.setProperty("--orbit-tail-x", `${((1 - tailExit) * (width < 700 ? 42 : 96)).toFixed(2)}px`);
+    root.style.setProperty("--orbit-o-opacity", oExit.toFixed(4));
+
+    const mobileNavigation = width <= 820;
+    const triggerSize = mobileNavigation ? 40 : 44;
+    const dockCenterX = mobileNavigation ? 36 : 55;
+    const dockCenterY = mobileNavigation ? 36 : 48;
+    const letterRect = orbitLetter ? orbitLetter.getBoundingClientRect() : null;
+    const letterCenterX = letterRect ? letterRect.left + letterRect.width * 0.5 : width * 0.39;
+    const letterCenterY = letterRect ? letterRect.top + letterRect.height * 0.48 : height * 0.5;
+    const dockEase = logoDockProgress * logoDockProgress * (3 - 2 * logoDockProgress);
+    const logoCenterX = mix(letterCenterX, dockCenterX, dockEase);
+    const logoCenterY = mix(letterCenterY, dockCenterY, dockEase) - Math.sin(Math.PI * dockEase) * height * 0.085;
+    const startScaleX = letterRect ? Math.max(1, letterRect.width / triggerSize) : 3.2;
+    const startScaleY = letterRect ? Math.max(1, letterRect.height * 0.82 / triggerSize) : 4.1;
+    const logoScaleX = mix(startScaleX, 1, dockEase);
+    const logoScaleY = mix(startScaleY, 1, dockEase);
+
+    orbitLogoTarget.x = logoCenterX;
+    orbitLogoTarget.y = logoCenterY;
+    const performancePassed = targetOrbitScroll >= 0.91;
+    const logoOpacity = orbitVisible ? logoMorph : performancePassed ? 1 : 0;
+    root.style.setProperty("--logo-opacity", logoOpacity.toFixed(4));
+    root.style.setProperty("--logo-tx", `${(logoCenterX - dockCenterX).toFixed(2)}px`);
+    root.style.setProperty("--logo-ty", `${(logoCenterY - dockCenterY).toFixed(2)}px`);
+    root.style.setProperty("--logo-scale-x", logoScaleX.toFixed(4));
+    root.style.setProperty("--logo-scale-y", logoScaleY.toFixed(4));
+
+    logoDocked = targetOrbitScroll >= (reducedMotion.matches ? 0.95 : 0.985);
+    orbitNavigation.classList.toggle("is-docked", logoDocked);
+    orbitNavToggle.tabIndex = logoDocked ? 0 : -1;
+    if (!logoDocked && navigationOpen) setNavigationOpen(false, false);
+    body.classList.toggle("is-orbit-scene", orbitVisible && darkReveal > 0.7);
+
+    const workProgress = reducedMotion.matches ? targetWorkScroll : smoothWorkScroll;
+    const workEntry = reducedMotion.matches ? targetWorkEntry : smoothWorkEntry;
+    const workIntroIn = smoothstep(0.08, 0.72, workEntry);
+    const workIntroOut = smoothstep(0.12, 0.245, workProgress);
+    const workIntroOpacity = workIntroIn * (1 - workIntroOut);
+    const workSystemIn = smoothstep(0.17, 0.285, workProgress);
+    const workSystemOut = smoothstep(0.845, 0.92, workProgress);
+    const workSystemOpacity = workSystemIn * (1 - workSystemOut);
+    const verdictOpacity = smoothstep(0.875, 0.955, workProgress);
+    const chapterPosition = clamp((workProgress - 0.235) / 0.61 * 4, 0, 3.999);
+    const activeWorkStep = clamp(Math.floor(chapterPosition), 0, 3);
+
+    root.style.setProperty("--work-intro-opacity", workIntroOpacity.toFixed(4));
+    root.style.setProperty("--work-intro-y", `${(-workIntroOut * 30).toFixed(2)}px`);
+    root.style.setProperty("--work-system-opacity", workSystemOpacity.toFixed(4));
+    root.style.setProperty("--work-system-y", `${((1 - workSystemIn) * 36 - workSystemOut * 24).toFixed(2)}px`);
+    root.style.setProperty("--work-spine-progress", smoothstep(0.2, 0.83, workProgress).toFixed(4));
+    root.style.setProperty("--work-ring-rotation", `${(-18 + workProgress * 92).toFixed(2)}deg`);
+    root.style.setProperty("--work-needle-rotation", `${(-34 + activeWorkStep * 29 + (chapterPosition % 1) * 7).toFixed(2)}deg`);
+    root.style.setProperty("--work-verdict-opacity", verdictOpacity.toFixed(4));
+    root.style.setProperty("--work-verdict-y", `${((1 - verdictOpacity) * 32).toFixed(2)}px`);
+    root.style.setProperty("--work-chapters-opacity", (1 - smoothstep(0.82, 0.9, workProgress)).toFixed(4));
+
+    workChapters.forEach((chapter, index) => {
+      const distance = Math.abs(chapterPosition - (index + 0.5));
+      const opacity = reducedMotion.matches
+        ? index === activeWorkStep ? 1 : 0
+        : 1 - smoothstep(0.42, 0.76, distance);
+      const direction = chapterPosition < index + 0.5 ? 1 : -1;
+      chapter.style.setProperty("--chapter-opacity", (opacity * workSystemOpacity).toFixed(4));
+      chapter.style.setProperty("--chapter-y", `${(direction * (1 - opacity) * 30).toFixed(2)}px`);
+      chapter.setAttribute("aria-hidden", opacity < 0.08 ? "true" : "false");
+    });
+
+    workMarkers.forEach((marker, index) => {
+      marker.classList.toggle("is-active", index === activeWorkStep && workSystemOpacity > 0.1);
+      marker.classList.toggle("is-passed", index < activeWorkStep);
+    });
+
+    if (workInstrumentLabel) {
+      const labels = ["DIAGNOSTIC FIELD", "TECHNICAL ORDER", "SEMANTIC FIELD", "AUTHORITY FIELD"];
+      workInstrumentLabel.innerHTML = labels[activeWorkStep].replace(" ", "<br>");
+    }
+    body.classList.toggle("is-work-scene", workVisible);
+  }
+
+  function updatePointer(now) {
+    const autonomous = !pointer.active || now - pointer.lastMove > 2600 || !finePointer.matches;
+    if (autonomous) {
+      const time = now * 0.00014;
+      pointer.tx = width * (0.67 + Math.sin(time * 1.7) * 0.11);
+      pointer.ty = height * (0.51 + Math.cos(time * 1.18) * 0.12);
+    }
+
+    pointer.px = pointer.x;
+    pointer.py = pointer.y;
+    pointer.x += (pointer.tx - pointer.x) * 0.075;
+    pointer.y += (pointer.ty - pointer.y) * 0.075;
+
+    if (finePointer.matches && pointer.active) {
+      cursorElement.style.left = `${pointer.x}px`;
+      cursorElement.style.top = `${pointer.y}px`;
+    }
+  }
+
+  function setNavigationOpen(nextState, restoreFocus = true) {
+    const next = Boolean(nextState && logoDocked);
+    navigationOpen = next;
+    orbitNavigation.classList.toggle("is-open", next);
+    orbitNavToggle.setAttribute("aria-expanded", String(next));
+    orbitNavToggle.setAttribute("aria-label", next ? "Close navigation" : "Open navigation");
+    orbitNavPanel.setAttribute("aria-hidden", String(!next));
+    orbitNavPanel.inert = !next;
+    orbitNavHint.textContent = next ? "CLOSE / NAVIGATION" : "OPEN / NAVIGATION";
+    body.classList.toggle("nav-open", next);
+
+    if (!next && restoreFocus && document.activeElement !== orbitNavToggle) {
+      orbitNavToggle.focus({ preventScroll: true });
+    }
+  }
+
+  function onNavigationKeydown(event) {
+    if (!navigationOpen) return;
+    if (event.key === "Escape") {
+      event.preventDefault();
+      setNavigationOpen(false);
+      return;
+    }
+
+    if (event.key !== "Tab" || width > 820) return;
+    const focusable = [orbitNavToggle, ...orbitNavLinks];
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  }
+
+  function onNavigationPointerDown(event) {
+    if (navigationOpen && !orbitNavigation.contains(event.target)) {
+      setNavigationOpen(false, false);
+    }
+  }
+
+  function drawFragments(seconds, scroll) {
+    ambientContext.save();
+    ambientContext.textBaseline = "middle";
+    const centerX = width * 0.7;
+    const centerY = height * 0.52;
+    for (let index = 0; index < fragments.length; index += 1) {
+      const fragment = fragments[index];
+      const appeared = smoothstep(fragment.delay, fragment.delay + 1.5, seconds);
+      if (appeared <= 0.002) continue;
+      const depthFade = 1 - smoothstep(0.08, 0.96, scroll);
+      const dx = fragment.x - centerX;
+      const dy = fragment.y - centerY;
+      const turn = fragment.orbit * (0.025 + seconds * 0.0065 * fragment.speed);
+      const cosine = Math.cos(turn);
+      const sine = Math.sin(turn);
+      const x = centerX + dx * cosine - dy * sine + Math.cos(seconds * fragment.speed * 0.72 + fragment.phase) * 10 + scroll * fragment.speed * 54;
+      const y = centerY + dx * sine + dy * cosine + Math.sin(seconds * fragment.speed + fragment.phase) * 7 - scroll * height * (0.34 + fragment.speed * 0.2);
+      const pointerDistance = Math.hypot(pointer.x - x, pointer.y - y);
+      const field = smoothstep(175, 0, pointerDistance);
+      const alpha = fragment.alpha * appeared * depthFade * (0.82 + field * 0.42) * (0.65 + fragment.depth * 0.55);
+      if (alpha <= 0.002) continue;
+
+      ambientContext.font = `${fragment.size}px "IBM Plex Mono", monospace`;
+      ambientContext.fillStyle = fragment.accent && (field > 0.08 || index % 7 === 0)
+        ? `rgba(216,255,0,${Math.min(0.72, alpha * 1.32)})`
+        : `rgba(240,237,228,${alpha})`;
+      ambientContext.fillText(fragment.label, x, y);
+    }
+    ambientContext.restore();
+  }
+
+  function cubic(from, controlA, controlB, to, amount) {
+    const inverse = 1 - amount;
+    return inverse * inverse * inverse * from
+      + 3 * inverse * inverse * amount * controlA
+      + 3 * inverse * amount * amount * controlB
+      + amount * amount * amount * to;
+  }
+
+  function cubicDerivative(from, controlA, controlB, to, amount) {
+    const inverse = 1 - amount;
+    return 3 * inverse * inverse * (controlA - from)
+      + 6 * inverse * amount * (controlB - controlA)
+      + 3 * amount * amount * (to - controlB);
+  }
+
+  function buildStaticField() {
+    const random = mulberry32(19082026 + Math.round(width));
+    const staticContext = staticFieldCanvas.getContext("2d");
+    staticFieldCanvas.width = Math.max(1, Math.round(width));
+    staticFieldCanvas.height = Math.max(1, Math.round(height));
+    staticContext.clearRect(0, 0, width, height);
+    staticContext.globalCompositeOperation = "lighter";
+    staticContext.lineCap = "round";
+
+    const isMobile = width < 700;
+    const count = isMobile ? 1580 : 4250;
+    const centerX = width * (isMobile ? 0.72 : 0.69);
+    const centerY = height * (isMobile ? 0.43 : 0.51);
+    const ignitionX = width * (isMobile ? 0.77 : 0.79);
+    const ignitionY = height * (isMobile ? 0.5 : 0.72);
+
+    for (let index = 0; index < count; index += 1) {
+      const familyRoll = random();
+      const family = familyRoll < 0.56 ? 0 : familyRoll < 0.84 ? 1 : 2;
+      const progress = random();
+      const lane = random() * 2 - 1;
+      let x;
+      let y;
+      let alphaFade = 1;
+      let accent = random() > 0.94;
+
+      if (family === 0) {
+        const p0x = -width * 0.18;
+        const p0y = height * 0.64;
+        const p1x = width * 0.31;
+        const p1y = height * 0.96;
+        const p2x = width * 0.53;
+        const p2y = height * 0.06;
+        const p3x = width * 1.16;
+        const p3y = height * 0.57;
+        x = cubic(p0x, p1x, p2x, p3x, progress);
+        y = cubic(p0y, p1y, p2y, p3y, progress);
+        const tangentX = cubicDerivative(p0x, p1x, p2x, p3x, progress);
+        const tangentY = cubicDerivative(p0y, p1y, p2y, p3y, progress);
+        const tangentLength = Math.hypot(tangentX, tangentY) || 1;
+        const spread = (isMobile ? 45 : 116) * (0.25 + Math.sin(Math.PI * progress) * 0.75);
+        x += (-tangentY / tangentLength) * lane * spread;
+        y += (tangentX / tangentLength) * lane * spread;
+        alphaFade = Math.pow(Math.sin(Math.PI * progress), 0.3);
+      } else if (family === 1) {
+        const angle = progress * Math.PI * 5.4 + lane * 0.68 + (random() - 0.5) * 0.14;
+        const radius = mix(width * 0.44, width * 0.028, progress);
+        x = centerX + Math.cos(angle) * radius;
+        y = centerY + Math.sin(angle) * radius * (isMobile ? 0.59 : 0.52);
+        alphaFade = Math.pow(Math.sin(Math.PI * progress), 0.26);
+      } else {
+        const angle = random() * Math.PI * 2;
+        const radius = Math.pow(random(), 0.58) * width * (isMobile ? 0.2 : 0.16);
+        x = ignitionX + Math.cos(angle) * radius;
+        y = ignitionY + Math.sin(angle) * radius * 0.5;
+        accent = random() > 0.28;
+        alphaFade = 0.72 + random() * 0.28;
+      }
+
+      const sparkScale = index % 37 === 0 ? 1.85 : index % 13 === 0 ? 1.28 : 1;
+      const size = (0.48 + Math.pow(random(), 2.2) * (isMobile ? 1.9 : 2.55)) * sparkScale;
+      const alpha = (0.22 + random() * 0.7) * alphaFade;
+      staticContext.fillStyle = accent
+        ? `rgba(216,255,0,${Math.min(0.82, alpha * 1.16)})`
+        : `rgba(240,237,228,${alpha})`;
+      staticContext.fillRect(x - size * 0.5, y - size * 0.5, size, size);
+
+      if (index % 7 === 0) {
+        const length = 6 + random() * (isMobile ? 14 : 27);
+        const angle = Math.atan2(centerY - y, centerX - x) + Math.PI * 0.5 + lane * 0.18;
+        staticContext.beginPath();
+        staticContext.moveTo(x, y);
+        staticContext.lineTo(x + Math.cos(angle) * length, y + Math.sin(angle) * length);
+        staticContext.strokeStyle = accent
+          ? `rgba(216,255,0,${alpha * 0.82})`
+          : `rgba(240,237,228,${alpha * 0.76})`;
+        staticContext.lineWidth = 0.38 + random() * 0.52;
+        staticContext.stroke();
+      }
+    }
+  }
+
+  function drawStaticField(seconds, scroll) {
+    const reveal = smoothstep(0.9, 5.6, seconds);
+    const fade = 1 - smoothstep(0.18, 0.9, scroll);
+    if (reveal * fade < 0.002) return;
+    ambientContext.save();
+    ambientContext.globalAlpha = reveal * fade * 0.98;
+    const driftX = reducedMotion.matches ? 0 : Math.sin(seconds * 0.075) * 2.2;
+    const driftY = reducedMotion.matches ? 0 : Math.cos(seconds * 0.063) * 1.6;
+    ambientContext.translate(driftX, driftY - scroll * height * 0.08);
+    ambientContext.drawImage(staticFieldCanvas, 0, 0, width, height);
+    ambientContext.restore();
+  }
+
+  function drawSwarm(seconds, scroll) {
+    const reveal = smoothstep(0.75, 5.7, seconds);
+    const depthFade = 1 - smoothstep(0.22, 0.94, scroll);
+    const time = Math.max(0, seconds - 0.65);
+    const centerX = width * (width < 700 ? 0.72 : 0.69);
+    const centerY = height * (width < 700 ? 0.43 : 0.51);
+
+    ambientContext.save();
+    ambientContext.globalCompositeOperation = "lighter";
+    ambientContext.lineCap = "round";
+
+    for (let index = 0; index < swarm.length; index += 1) {
+      const particle = swarm[index];
+      const localReveal = smoothstep(particle.delay * 0.44, 2.6 + particle.delay, seconds);
+      let progress = (particle.u + time * particle.speed) % 1;
+      let x;
+      let y;
+      let routeFade = 1;
+
+      if (particle.family === 0) {
+        const p0x = -width * 0.16;
+        const p0y = height * 0.64;
+        const p1x = width * 0.31;
+        const p1y = height * 0.94;
+        const p2x = width * 0.53;
+        const p2y = height * 0.08;
+        const p3x = width * 1.14;
+        const p3y = height * 0.57;
+        x = cubic(p0x, p1x, p2x, p3x, progress);
+        y = cubic(p0y, p1y, p2y, p3y, progress);
+        const tangentX = cubicDerivative(p0x, p1x, p2x, p3x, progress);
+        const tangentY = cubicDerivative(p0y, p1y, p2y, p3y, progress);
+        const tangentLength = Math.hypot(tangentX, tangentY) || 1;
+        const laneWidth = (width < 700 ? 34 : 88) * (0.3 + Math.sin(Math.PI * progress) * 0.7);
+        x += (-tangentY / tangentLength) * particle.lane * laneWidth;
+        y += (tangentX / tangentLength) * particle.lane * laneWidth;
+        y += Math.sin(progress * 28 + particle.phase + time * 0.22) * (1.2 + particle.depth * 2.8);
+        routeFade = Math.pow(Math.sin(Math.PI * progress), 0.42);
+      } else if (particle.family === 1) {
+        const angle = progress * Math.PI * 5.1 + particle.lane * 0.74 + Math.sin(time * 0.11 + particle.phase) * 0.08;
+        const radius = mix(width * (0.42 + particle.lane * 0.035), width * 0.025, progress);
+        x = centerX + Math.cos(angle) * radius;
+        y = centerY + Math.sin(angle) * radius * (width < 700 ? 0.58 : 0.51);
+        x += Math.sin(angle * 2.7 + time * 0.28) * 3.5 * particle.depth;
+        routeFade = Math.pow(Math.sin(Math.PI * progress), 0.34);
+      } else if (particle.family === 2) {
+        const ignitionX = width * (width < 700 ? 0.77 : 0.79);
+        const ignitionY = height * (width < 700 ? 0.5 : 0.72);
+        const angle = particle.phase + progress * 1.2 + Math.sin(time * 0.08 + particle.phase) * 0.12;
+        const radius = mix(width * 0.012, width * (0.13 + particle.depth * 0.075), progress);
+        x = ignitionX + Math.cos(angle) * radius;
+        y = ignitionY + Math.sin(angle) * radius * 0.54;
+        routeFade = Math.pow(Math.sin(Math.PI * progress), 0.31);
+      } else {
+        x = width * particle.u + Math.cos(time * particle.speed * 8 + particle.phase) * (8 + particle.depth * 13);
+        y = height * (0.06 + ((particle.phase / (Math.PI * 2)) * 0.88)) + Math.sin(time * particle.speed * 7 + particle.phase) * 10;
+        routeFade = 0.52;
+      }
+
+      const pointerDx = x - pointer.x;
+      const pointerDy = y - pointer.y;
+      const pointerDistance = Math.hypot(pointerDx, pointerDy) || 1;
+      const pointerField = reducedMotion.matches ? 0 : smoothstep(width < 700 ? 92 : 160, 8, pointerDistance);
+      x += (pointerDx / pointerDistance) * pointerField * (2.5 + particle.depth * 5.5);
+      y += (pointerDy / pointerDistance) * pointerField * (2.5 + particle.depth * 5.5);
+
+      if (scroll > 0) {
+        x += (x - centerX) * scroll * particle.depth * 0.56;
+        y += (y - centerY) * scroll * particle.depth * 0.34 - scroll * height * particle.depth * 0.25;
+      }
+
+      if (!Number.isFinite(particle.x)) {
+        particle.x = x;
+        particle.y = y;
+        particle.px = x;
+        particle.py = y;
+      } else {
+        particle.px = particle.x;
+        particle.py = particle.y;
+        particle.x = x;
+        particle.y = y;
+      }
+
+      const velocityX = particle.x - particle.px;
+      const velocityY = particle.y - particle.py;
+      const speed = Math.hypot(velocityX, velocityY);
+      const alpha = particle.alpha * reveal * localReveal * depthFade * routeFade * (0.7 + particle.depth * 0.45);
+      if (alpha < 0.003) continue;
+
+      if ((particle.spark || index % 4 === 0) && speed < width * 0.08) {
+        ambientContext.beginPath();
+        ambientContext.moveTo(particle.x - velocityX * (particle.spark ? 3.8 : 2.15), particle.y - velocityY * (particle.spark ? 3.8 : 2.15));
+        ambientContext.lineTo(particle.x, particle.y);
+        ambientContext.strokeStyle = particle.accent
+          ? `rgba(216,255,0,${Math.min(0.62, alpha * 0.58)})`
+          : `rgba(240,237,228,${alpha * 0.42})`;
+        ambientContext.lineWidth = Math.max(0.32, particle.size * (particle.spark ? 0.72 : 0.43));
+        ambientContext.stroke();
+      }
+
+      ambientContext.fillStyle = particle.accent
+        ? `rgba(216,255,0,${Math.min(0.82, alpha * 1.2)})`
+        : `rgba(240,237,228,${alpha})`;
+      const drawSize = particle.size * (particle.spark ? 1.42 : 1);
+      ambientContext.fillRect(particle.x - drawSize * 0.5, particle.y - drawSize * 0.5, drawSize, drawSize);
+    }
+
+    ambientContext.restore();
+  }
+
+  function drawFilaments(seconds, scroll) {
+    const reveal = smoothstep(2.65, 5.4, seconds);
+    const release = 1 - smoothstep(9.2, 11.2, seconds);
+    const restingCurrent = smoothstep(9.8, 11.4, seconds) * 0.34;
+    const intensity = Math.max(reveal * release, restingCurrent) * (1 - smoothstep(0.12, 0.74, scroll));
+    if (intensity < 0.002) return;
+
+    const strands = width < 700 ? 4 : 6;
+    const samples = width < 700 ? 34 : 44;
+    const baseY = height * (width < 700 ? 0.405 : 0.57);
+
+    ambientContext.save();
+    ambientContext.globalCompositeOperation = "lighter";
+    ambientContext.lineCap = "round";
+
+    for (let strand = 0; strand < strands; strand += 1) {
+      const spread = strand - (strands - 1) * 0.5;
+      let previousX = 0;
+      let previousY = 0;
+
+      for (let sample = 0; sample <= samples; sample += 1) {
+        const u = sample / samples;
+        const inverse = 1 - u;
+        const p0x = width * 0.13;
+        const p0y = baseY + spread * 5;
+        const p1x = width * 0.39;
+        const p1y = height * 0.78 + spread * 9;
+        const p2x = width * 0.58;
+        const p2y = height * 0.25 - spread * 7;
+        const p3x = width * 0.91;
+        const p3y = height * 0.54 + spread * 4;
+        const x = inverse * inverse * inverse * p0x + 3 * inverse * inverse * u * p1x + 3 * inverse * u * u * p2x + u * u * u * p3x;
+        const y = inverse * inverse * inverse * p0y + 3 * inverse * inverse * u * p1y + 3 * inverse * u * u * p2y + u * u * u * p3y
+          + Math.sin(u * 19 + seconds * 0.33 + strand * 0.71) * (0.6 + strand * 0.08);
+
+        if (sample > 0) {
+          const pulse = 0.2 + 0.8 * Math.pow(Math.max(0, Math.sin(u * 12.5 - seconds * 0.78 + strand)), 3);
+          const centerFade = Math.sin(Math.PI * u);
+          const alpha = intensity * centerFade * pulse * (strand === Math.floor(strands * 0.68) ? 0.14 : 0.082);
+          if (alpha > 0.002) {
+            ambientContext.beginPath();
+            ambientContext.moveTo(previousX, previousY);
+            ambientContext.lineTo(x, y);
+            const acid = strand === Math.floor(strands * 0.68) && u > 0.55 && u < 0.76;
+            ambientContext.strokeStyle = acid
+              ? `rgba(216,255,0,${alpha * 1.42})`
+              : `rgba(240,237,228,${alpha * 1.58})`;
+            ambientContext.lineWidth = acid ? 0.76 : 0.38 + strand * 0.018;
+            ambientContext.stroke();
+          }
+        }
+
+        previousX = x;
+        previousY = y;
+      }
+    }
+
+    ambientContext.restore();
+  }
+
+  function drawParticles(seconds, scroll) {
+    const motionAllowed = !reducedMotion.matches;
+    const assemble = smoothstep(0.95, 5.35, seconds);
+    const arrival = smoothstep(1.1, 3.9, seconds);
+    const passageIn = smoothstep(5.0, 6.2, seconds);
+    const passageOut = 1 - smoothstep(8.1, 9.25, seconds);
+    const passage = passageIn * passageOut;
+    const rest = smoothstep(8.4, 10.4, seconds);
+    const loopCurrent = rest * (0.1 + (Math.sin((seconds - 10.4) * 0.52) + 1) * 0.045);
+    const cursorRadius = width < 700 ? 105 : 168;
+    const centerX = width * 0.58;
+    const centerY = height * 0.5;
+
+    context.save();
+    context.lineCap = "round";
+    context.globalCompositeOperation = "lighter";
+
+    for (let index = 0; index < particles.length; index += 1) {
+      const particle = particles[index];
+      const localAssemble = smoothstep(0.9 + particle.delay * 0.48, 4.6 + particle.delay * 0.42, seconds);
+      const ribbon = Math.sin((particle.tx / Math.max(1, width)) * 10 + seconds * 0.62 + particle.phase);
+      const directedFlow = motionAllowed ? passage + loopCurrent : 0;
+      const flowX = directedFlow * (64 + particle.depth * 88) * (particle.stream ? 1 : 0.38);
+      const flowY = directedFlow * ribbon * (10 + particle.depth * 22);
+      let targetX = mix(particle.ox, particle.tx, localAssemble) + flowX;
+      let targetY = mix(particle.oy, particle.ty, localAssemble) + flowY;
+
+      if (rest > 0 && motionAllowed) {
+        const breath = particle.stream ? 8.5 : 2.2;
+        targetX += Math.sin(seconds * 0.34 + particle.phase) * breath * rest;
+        targetY += Math.cos(seconds * 0.28 + particle.phase) * (particle.stream ? 5.5 : 2.5) * rest;
+      }
+
+      const pointerDx = targetX - pointer.x;
+      const pointerDy = targetY - pointer.y;
+      const pointerDistance = Math.hypot(pointerDx, pointerDy) || 1;
+      const field = smoothstep(cursorRadius, 12, pointerDistance);
+      const pointerVelocity = Math.min(1, Math.hypot(pointer.x - pointer.px, pointer.y - pointer.py) / 16);
+      const fieldStrength = motionAllowed
+        ? field * (4.5 + pointerVelocity * 5.5) * particle.depth
+        : 0;
+      targetX += (pointerDx / pointerDistance) * fieldStrength;
+      targetY += (pointerDy / pointerDistance) * fieldStrength;
+
+      if (scroll > 0) {
+        const depth = scroll * (0.42 + particle.depth * 0.85);
+        targetX += (particle.tx - centerX) * depth * 0.42 + particle.drift * scroll * width * 0.2;
+        targetY += (particle.ty - centerY) * depth * 0.34 - scroll * height * (0.28 + particle.depth * 0.42);
+      }
+
+      particle.px = particle.x;
+      particle.py = particle.y;
+      const ease = 0.022 + localAssemble * 0.018;
+      particle.x += (targetX - particle.x) * ease;
+      particle.y += (targetY - particle.y) * ease;
+
+      const velocityX = particle.x - particle.px;
+      const velocityY = particle.y - particle.py;
+      const speed = Math.hypot(velocityX, velocityY);
+      const alphaIn = smoothstep(particle.delay * 0.34, 1.5 + particle.delay * 0.5, seconds);
+      const alphaOut = 1 - smoothstep(0.48, 1, scroll);
+      const alpha = alphaIn * alphaOut * (0.23 + arrival * 0.55) * (0.72 + particle.depth * 0.28);
+      const acid = particle.accent && (passage > 0.06 || field > 0.1);
+      const radius = particle.size * (0.72 + particle.depth * 0.45) * (1 - scroll * 0.45);
+
+      if (particle.stream && speed > 0.18 && assemble > 0.12) {
+        context.beginPath();
+        context.moveTo(particle.x - velocityX * (2.4 + passage * 4.5), particle.y - velocityY * (2.4 + passage * 4.5));
+        context.lineTo(particle.x, particle.y);
+        context.strokeStyle = acid
+          ? `rgba(216,255,0,${alpha * 0.28})`
+          : `rgba(240,237,228,${alpha * 0.2})`;
+        context.lineWidth = Math.max(0.35, radius * 0.42);
+        context.stroke();
+      }
+
+      context.beginPath();
+      context.arc(particle.x, particle.y, Math.max(0.25, radius), 0, Math.PI * 2);
+      context.fillStyle = acid
+        ? `rgba(216,255,0,${Math.min(0.88, alpha * 1.35)})`
+        : `rgba(240,237,228,${alpha})`;
+      context.fill();
+    }
+
+    context.restore();
+  }
+
+  function drawSemanticThreads(seconds, progress, entry) {
+    const intensity = entry * (0.34 + smoothstep(0.04, 0.54, progress) * 0.66);
+    const threads = width < 700 ? 6 : 11;
+    semanticContext.save();
+    semanticContext.lineCap = "round";
+
+    for (let index = 0; index < threads; index += 1) {
+      const spread = index - (threads - 1) * 0.5;
+      const drift = reducedMotion.matches ? 0 : Math.sin(seconds * 0.17 + index) * 4;
+      semanticContext.beginPath();
+      semanticContext.moveTo(-width * 0.08, height * (0.72 + spread * 0.028));
+      semanticContext.bezierCurveTo(
+        width * 0.27,
+        height * (0.9 + spread * 0.018),
+        width * 0.57,
+        height * (0.14 - spread * 0.018),
+        width * 1.08,
+        height * (0.47 + spread * 0.024) + drift
+      );
+      const acid = index === Math.floor(threads * 0.7);
+      semanticContext.strokeStyle = acid
+        ? `rgba(126,147,0,${intensity * 0.28})`
+        : `rgba(5,5,4,${intensity * (0.052 + index * 0.004)})`;
+      semanticContext.lineWidth = acid ? 0.78 : 0.48;
+      semanticContext.stroke();
+    }
+
+    semanticContext.restore();
+  }
+
+  function drawSemanticField(seconds) {
+    const progress = reducedMotion.matches ? 1 : smoothSceneScroll;
+    const entry = reducedMotion.matches ? 1 : smoothstep(0.12, 0.96, smoothSceneEntry);
+    if (entry < 0.002) return;
+
+    drawSemanticThreads(seconds, progress, entry);
+
+    const assemble = reducedMotion.matches ? 1 : smoothstep(0.06, 0.58, progress);
+    const meaning = reducedMotion.matches ? 0.35 : smoothstep(0.69, 0.96, progress);
+    const stageRect = semanticStage.getBoundingClientRect();
+    const localPointerX = pointer.x - stageRect.left;
+    const localPointerY = pointer.y - stageRect.top;
+    const lensEnabled = body.classList.contains("is-light-scene") && pointer.active && finePointer.matches && !reducedMotion.matches;
+    const clusters = width < 700
+      ? [[width * 0.24, height * 0.28], [width * 0.72, height * 0.42], [width * 0.57, height * 0.7]]
+      : [[width * 0.2, height * 0.3], [width * 0.77, height * 0.28], [width * 0.73, height * 0.7]];
+
+    semanticContext.save();
+    semanticContext.lineCap = "round";
+    semanticContext.textBaseline = "middle";
+
+    for (let index = 0; index < semanticParticles.length; index += 1) {
+      const particle = semanticParticles[index];
+      const fallRange = height * 1.36;
+      const fallingY = ((particle.oy + seconds * (7 + particle.speed * 10) + height * 0.18) % fallRange) - height * 0.18;
+      const fallingX = particle.ox + Math.sin(seconds * 0.21 * particle.speed + particle.phase) * (5 + particle.depth * 10);
+      let targetX = mix(fallingX, particle.tx, assemble);
+      let targetY = mix(fallingY, particle.ty, assemble);
+
+      if (!reducedMotion.matches) {
+        targetX += Math.sin(seconds * 0.23 + particle.phase) * (1.5 + particle.depth * 2.8) * assemble;
+        targetY += Math.cos(seconds * 0.19 + particle.phase) * (1.4 + particle.depth * 2.2) * assemble;
+      }
+
+      if (meaning > 0) {
+        const cluster = clusters[index % clusters.length];
+        const radius = 18 + particle.depth * (width < 700 ? 42 : 76);
+        const clusterX = cluster[0] + Math.cos(particle.phase) * radius;
+        const clusterY = cluster[1] + Math.sin(particle.phase) * radius * 0.58;
+        targetX = mix(targetX, clusterX, meaning * 0.78);
+        targetY = mix(targetY, clusterY, meaning * 0.78);
+      }
+
+      const pointerDx = targetX - localPointerX;
+      const pointerDy = targetY - localPointerY;
+      const pointerDistance = Math.hypot(pointerDx, pointerDy) || 1;
+      const lensField = lensEnabled ? smoothstep(170, 12, pointerDistance) : 0;
+      targetX = mix(targetX, particle.tx, lensField * 0.22);
+      targetY = mix(targetY, particle.ty, lensField * 0.22);
+
+      particle.px = particle.x;
+      particle.py = particle.y;
+      if (reducedMotion.matches) {
+        particle.x = targetX;
+        particle.y = targetY;
+      } else {
+        const ease = 0.032 + assemble * 0.024 + lensField * 0.018;
+        particle.x += (targetX - particle.x) * ease;
+        particle.y += (targetY - particle.y) * ease;
+      }
+
+      const velocityX = particle.x - particle.px;
+      const velocityY = particle.y - particle.py;
+      const alpha = entry * particle.alpha * (0.52 + assemble * 0.48) * (0.72 + lensField * 0.55);
+      const size = particle.size * (0.72 + particle.depth * 0.42);
+      const acid = particle.accent && (progress > 0.18 || lensField > 0.12);
+
+      if (index % 4 === 0 && Math.hypot(velocityX, velocityY) < width * 0.08) {
+        semanticContext.beginPath();
+        semanticContext.moveTo(particle.x - velocityX * 2.8, particle.y - velocityY * 2.8);
+        semanticContext.lineTo(particle.x, particle.y);
+        semanticContext.strokeStyle = acid
+          ? `rgba(126,147,0,${alpha * 0.58})`
+          : `rgba(5,5,4,${alpha * 0.34})`;
+        semanticContext.lineWidth = Math.max(0.35, size * 0.42);
+        semanticContext.stroke();
+      }
+
+      if (particle.glyph && index % 3 === 0) {
+        semanticContext.font = `${7 + particle.depth * 4}px "IBM Plex Mono", monospace`;
+        semanticContext.fillStyle = acid
+          ? `rgba(126,147,0,${Math.min(0.72, alpha)})`
+          : `rgba(5,5,4,${alpha * 0.72})`;
+        semanticContext.fillText(particle.glyph, particle.x, particle.y);
+      } else {
+        semanticContext.fillStyle = acid
+          ? `rgba(126,147,0,${Math.min(0.84, alpha * 1.2)})`
+          : `rgba(5,5,4,${alpha})`;
+        semanticContext.fillRect(particle.x - size * 0.5, particle.y - size * 0.5, size, size);
+      }
+    }
+
+    semanticContext.restore();
+  }
+
+  function drawOrbitPaths(seconds, progress, visibility, centerX, centerY) {
+    const pathReveal = smoothstep(0.24, 0.61, progress);
+    const settle = 1 - smoothstep(0.78, 0.96, progress) * 0.94;
+    const intensity = visibility * pathReveal * settle;
+    if (intensity < 0.002) return;
+
+    orbitContext.save();
+    orbitContext.lineCap = "round";
+
+    for (let index = 0; index < orbitBands.length; index += 1) {
+      const band = orbitBands[index];
+      const mobileScale = width < 700 ? 1.48 : 1;
+      const radiusX = width * band.rx * mobileScale;
+      const radiusY = height * band.ry * (width < 700 ? 0.82 : 1);
+      const drift = reducedMotion.matches ? 0 : Math.sin(seconds * 0.09 + index * 1.7) * 0.018;
+
+      orbitContext.save();
+      orbitContext.translate(centerX, centerY);
+      orbitContext.rotate(band.rotation + drift);
+      orbitContext.beginPath();
+      orbitContext.ellipse(0, 0, radiusX, radiusY, 0, band.start, band.end);
+      orbitContext.setLineDash(index % 2 ? [1.5, 7 + index * 1.8] : [18 + index * 5, 9 + index * 2]);
+      orbitContext.lineDashOffset = reducedMotion.matches ? 0 : -seconds * (2.2 + index * 0.75) * band.direction;
+      orbitContext.strokeStyle = index === 2
+        ? `rgba(216,255,0,${intensity * 0.42})`
+        : `rgba(240,237,228,${intensity * (0.065 + index * 0.018)})`;
+      orbitContext.lineWidth = index === 2 ? 0.82 : 0.42 + index * 0.07;
+      orbitContext.stroke();
+      orbitContext.restore();
+    }
+
+    orbitContext.setLineDash([]);
+    orbitContext.restore();
+  }
+
+  function drawOrbitField(seconds) {
+    const progress = reducedMotion.matches ? targetOrbitScroll : smoothOrbitScroll;
+    const visibility = reducedMotion.matches ? 1 : smoothstep(0.09, 0.32, progress);
+    if (visibility < 0.002) return;
+
+    const orbitRect = orbitStage.getBoundingClientRect();
+    const stagePinned = orbitRect.top <= 1 && orbitRect.bottom >= height - 1;
+    const pointerEnabled = stagePinned && pointer.active && finePointer.matches && !reducedMotion.matches;
+    const localPointerX = pointer.x - orbitRect.left;
+    const localPointerY = pointer.y - orbitRect.top;
+    const centerPull = pointerEnabled ? 0.014 : 0;
+    const centerX = width * 0.5 + (localPointerX - width * 0.5) * centerPull;
+    const centerY = height * 0.5 + (localPointerY - height * 0.5) * centerPull;
+    const sourceX = width * (width < 700 ? 0.95 : 0.92);
+    const sourceY = height * (width < 700 ? 0.35 : 0.45);
+    const capture = reducedMotion.matches ? 1 : smoothstep(0.18, 0.61, progress);
+    const fieldReveal = reducedMotion.matches ? 1 : smoothstep(0.16, 0.39, progress);
+    const collapse = smoothstep(0.78, 0.955, progress);
+    const particleFade = 1 - smoothstep(0.94, 1, progress) * 0.76;
+
+    drawOrbitPaths(seconds, progress, visibility, centerX, centerY);
+
+    orbitContext.save();
+    orbitContext.lineCap = "round";
+    orbitContext.textBaseline = "middle";
+
+    for (let index = 0; index < orbitParticles.length; index += 1) {
+      const particle = orbitParticles[index];
+      const band = orbitBands[particle.band];
+      const mobileScale = width < 700 ? 1.48 : 1;
+      const radiusX = width * band.rx * mobileScale * particle.radiusJitter;
+      const radiusY = height * band.ry * (width < 700 ? 0.82 : 1) * particle.radiusJitter;
+      const angle = particle.phase + particle.phaseOffset + seconds * particle.bandSpeed * particle.speedJitter;
+      const cosine = Math.cos(angle);
+      const sine = Math.sin(angle);
+      const localX = cosine * radiusX;
+      const localY = sine * radiusY;
+      const rotationCosine = Math.cos(band.rotation);
+      const rotationSine = Math.sin(band.rotation);
+      const orbitX = centerX + localX * rotationCosine - localY * rotationSine;
+      const orbitY = centerY + localX * rotationSine + localY * rotationCosine;
+      const launchAngle = Math.atan2(particle.oy - sourceY, particle.ox - sourceX) + capture * (1.8 + particle.depth * 1.5) * band.direction;
+      const launchDistance = Math.hypot(particle.ox - sourceX, particle.oy - sourceY) * (1 - capture * 0.58);
+      const spiralX = sourceX + Math.cos(launchAngle) * launchDistance;
+      const spiralY = sourceY + Math.sin(launchAngle) * launchDistance * 0.72;
+      let targetX = mix(spiralX, orbitX, capture);
+      let targetY = mix(spiralY, orbitY, capture);
+
+      const pointerDx = localPointerX - targetX;
+      const pointerDy = localPointerY - targetY;
+      const pointerDistance = Math.hypot(pointerDx, pointerDy) || 1;
+      const pointerField = pointerEnabled ? smoothstep(250, 22, pointerDistance) * (1 - collapse) : 0;
+      targetX += pointerDx * pointerField * 0.075;
+      targetY += pointerDy * pointerField * 0.075;
+
+      if (collapse > 0) {
+        const collapseRadius = mix(34 + particle.depth * 72, 3 + particle.depth * 8, collapse);
+        const collapseAngle = particle.phase + collapse * 3.2 * band.direction;
+        const collapsedX = orbitLogoTarget.x + Math.cos(collapseAngle) * collapseRadius;
+        const collapsedY = orbitLogoTarget.y + Math.sin(collapseAngle) * collapseRadius * 0.64;
+        targetX = mix(targetX, collapsedX, collapse);
+        targetY = mix(targetY, collapsedY, collapse);
+      }
+
+      particle.px = particle.x;
+      particle.py = particle.y;
+      if (reducedMotion.matches) {
+        particle.x = targetX;
+        particle.y = targetY;
+      } else {
+        const ease = 0.035 + capture * 0.025 + pointerField * 0.02;
+        particle.x += (targetX - particle.x) * ease;
+        particle.y += (targetY - particle.y) * ease;
+      }
+
+      const velocityX = particle.x - particle.px;
+      const velocityY = particle.y - particle.py;
+      const speed = Math.hypot(velocityX, velocityY);
+      const alpha = visibility * fieldReveal * particleFade * particle.alpha * (0.72 + pointerField * 0.5) * (1 - collapse * 0.34);
+      const size = particle.size * (0.68 + particle.depth * 0.5);
+      const acid = particle.accent && (progress > 0.3 || pointerField > 0.12);
+
+      if (index % 3 === 0 && speed < width * 0.11) {
+        const trail = 4.5 + particle.depth * 6.5;
+        orbitContext.beginPath();
+        orbitContext.moveTo(particle.x - velocityX * trail, particle.y - velocityY * trail);
+        orbitContext.lineTo(particle.x, particle.y);
+        orbitContext.strokeStyle = acid
+          ? `rgba(216,255,0,${alpha * 0.6})`
+          : `rgba(240,237,228,${alpha * 0.36})`;
+        orbitContext.lineWidth = Math.max(0.32, size * 0.34);
+        orbitContext.stroke();
+      }
+
+      if (particle.glyph && index % 2 === 0 && collapse < 0.46) {
+        orbitContext.font = `${7 + particle.depth * 4.5}px "IBM Plex Mono", monospace`;
+        orbitContext.fillStyle = acid
+          ? `rgba(216,255,0,${Math.min(0.78, alpha)})`
+          : `rgba(240,237,228,${alpha * 0.68})`;
+        orbitContext.fillText(particle.glyph, particle.x, particle.y);
+      } else {
+        orbitContext.beginPath();
+        orbitContext.arc(particle.x, particle.y, Math.max(0.3, size * 0.52), 0, Math.PI * 2);
+        orbitContext.fillStyle = acid
+          ? `rgba(216,255,0,${Math.min(0.86, alpha * 1.25)})`
+          : `rgba(240,237,228,${alpha})`;
+        orbitContext.fill();
+      }
+    }
+
+    orbitContext.restore();
+  }
+
+  function workTargetX(particle, mode, seconds) {
+    if (mode === 1) {
+      const column = Math.floor(particle.seedX * 8);
+      return width * (0.18 + column * 0.095) + Math.sin(seconds * 0.12 + particle.phase) * 2;
+    }
+    if (mode === 2) {
+      return width * (0.1 + particle.seedX * 0.84) + Math.sin(seconds * 0.1 + particle.phase) * 4;
+    }
+    if (mode === 3) {
+      const angle = particle.phase + seconds * (0.025 + particle.speed * 0.024);
+      const radiusX = width * (0.11 + particle.seedX * 0.25);
+      return width * 0.73 + Math.cos(angle) * radiusX;
+    }
+    return particle.originX + Math.sin(seconds * 0.18 + particle.phase) * (3 + particle.depth * 7);
+  }
+
+  function workTargetY(particle, mode, seconds) {
+    if (mode === 1) {
+      const row = Math.floor(particle.seedY * 14);
+      return height * (0.15 + row * 0.052) + Math.cos(seconds * 0.11 + particle.phase) * 2;
+    }
+    if (mode === 2) {
+      return height * (0.26 + particle.seedY * 0.48)
+        + Math.sin(particle.seedX * 12 + seconds * 0.28 + particle.phase * 0.18) * height * 0.055;
+    }
+    if (mode === 3) {
+      const angle = particle.phase + seconds * (0.025 + particle.speed * 0.024);
+      const radiusY = height * (0.07 + particle.seedY * 0.23);
+      return height * 0.51 + Math.sin(angle) * radiusY;
+    }
+    return particle.originY + Math.cos(seconds * 0.16 + particle.phase) * (3 + particle.depth * 6);
+  }
+
+  function drawWorkField(seconds) {
+    const progress = reducedMotion.matches ? targetWorkScroll : smoothWorkScroll;
+    const entry = reducedMotion.matches ? targetWorkEntry : smoothWorkEntry;
+    const visibility = smoothstep(0.05, 0.55, entry) * (1 - smoothstep(0.9, 0.985, progress) * 0.55);
+    if (visibility < 0.002) return;
+
+    const rawMode = clamp((progress - 0.22) / 0.63 * 4, 0, 3.999);
+    const mode = Math.floor(rawMode);
+    const nextMode = Math.min(3, mode + 1);
+    const modeBlend = smoothstep(0.58, 0.96, rawMode - mode);
+    const stageRect = workStage.getBoundingClientRect();
+    const stagePinned = stageRect.top <= 1 && stageRect.bottom >= height - 1;
+    const localPointerX = pointer.x - stageRect.left;
+    const localPointerY = pointer.y - stageRect.top;
+    const pointerEnabled = stagePinned && pointer.active && finePointer.matches && !reducedMotion.matches;
+    const contentReveal = smoothstep(0.14, 0.3, progress);
+
+    workContext.save();
+    workContext.lineCap = "round";
+    workContext.textBaseline = "middle";
+    workContext.globalCompositeOperation = "lighter";
+
+    for (let index = 0; index < workParticles.length; index += 1) {
+      const particle = workParticles[index];
+      const fromX = workTargetX(particle, mode, seconds);
+      const fromY = workTargetY(particle, mode, seconds);
+      const toX = workTargetX(particle, nextMode, seconds);
+      const toY = workTargetY(particle, nextMode, seconds);
+      let targetX = mix(fromX, toX, modeBlend);
+      let targetY = mix(fromY, toY, modeBlend);
+
+      if (pointerEnabled) {
+        const dx = localPointerX - targetX;
+        const dy = localPointerY - targetY;
+        const distance = Math.hypot(dx, dy) || 1;
+        const field = smoothstep(210, 18, distance) * 0.045;
+        targetX += dx * field;
+        targetY += dy * field;
+      }
+
+      particle.px = particle.x;
+      particle.py = particle.y;
+      if (reducedMotion.matches) {
+        particle.x = targetX;
+        particle.y = targetY;
+      } else {
+        const ease = 0.025 + contentReveal * 0.025;
+        particle.x += (targetX - particle.x) * ease;
+        particle.y += (targetY - particle.y) * ease;
+      }
+
+      const alpha = visibility * particle.alpha * (0.42 + contentReveal * 0.58);
+      const acid = particle.accent || (mode === 3 && index % 17 === 0);
+      const size = particle.size * (0.7 + particle.depth * 0.44);
+
+      if (index > 0 && index % 4 === 0) {
+        const previous = workParticles[index - 1];
+        const distance = Math.hypot(particle.x - previous.x, particle.y - previous.y);
+        if (distance < width * (mode === 2 ? 0.12 : 0.075)) {
+          workContext.beginPath();
+          workContext.moveTo(previous.x, previous.y);
+          workContext.lineTo(particle.x, particle.y);
+          workContext.strokeStyle = acid
+            ? `rgba(216,255,0,${alpha * 0.23})`
+            : `rgba(240,237,228,${alpha * 0.12})`;
+          workContext.lineWidth = 0.45;
+          workContext.stroke();
+        }
+      }
+
+      if (particle.glyph && mode !== 1) {
+        workContext.font = `${6 + particle.depth * 3}px "IBM Plex Mono", monospace`;
+        workContext.fillStyle = acid
+          ? `rgba(216,255,0,${Math.min(0.68, alpha)})`
+          : `rgba(240,237,228,${alpha * 0.5})`;
+        workContext.fillText(particle.glyph, particle.x, particle.y);
+      } else {
+        workContext.beginPath();
+        workContext.arc(particle.x, particle.y, Math.max(0.28, size * 0.5), 0, Math.PI * 2);
+        workContext.fillStyle = acid
+          ? `rgba(216,255,0,${Math.min(0.78, alpha * 1.15)})`
+          : `rgba(240,237,228,${alpha})`;
+        workContext.fill();
+      }
+    }
+
+    workContext.restore();
+  }
+
+  function render(now) {
+    if (!pageVisible) return;
+    if (!startTime) startTime = now;
+    if (now - lastFrame < 12) {
+      rafId = requestAnimationFrame(render);
+      return;
+    }
+    lastFrame = now;
+    const seconds = (now - startTime) / 1000;
+
+    if (!reducedMotion.matches) updatePointer(now);
+    updateDocumentMotion();
+
+    if (heroVisible) {
+      ambientContext.clearRect(0, 0, width, height);
+      context.clearRect(0, 0, width, height);
+
+      if (reducedMotion.matches) {
+        drawStaticField(12, smoothScroll);
+        drawFragments(12, smoothScroll);
+        drawSwarm(12, smoothScroll);
+        drawFilaments(12, smoothScroll);
+        drawParticles(12, smoothScroll);
+      } else {
+        drawStaticField(seconds, smoothScroll);
+        drawFragments(seconds, smoothScroll);
+        drawSwarm(seconds, smoothScroll);
+        drawFilaments(seconds, smoothScroll);
+        drawParticles(seconds, smoothScroll);
+      }
+    }
+
+    if (sceneVisible) {
+      semanticContext.clearRect(0, 0, width, height);
+      drawSemanticField(reducedMotion.matches ? 12 : seconds);
+    }
+
+    if (orbitVisible) {
+      orbitContext.clearRect(0, 0, width, height);
+      drawOrbitField(reducedMotion.matches ? 12 : seconds);
+    }
+
+    if (workVisible) {
+      workContext.clearRect(0, 0, width, height);
+      drawWorkField(reducedMotion.matches ? 12 : seconds);
+    }
+
+    rafId = requestAnimationFrame(render);
+  }
+
+  function onPointerMove(event) {
+    pointer.tx = event.clientX;
+    pointer.ty = event.clientY;
+    pointer.active = true;
+    pointer.lastMove = performance.now();
+    if (finePointer.matches) body.classList.add("has-pointer");
+  }
+
+  function onPointerLeave() {
+    pointer.active = false;
+    body.classList.remove("has-pointer");
+  }
+
+  function onVisibilityChange() {
+    pageVisible = !document.hidden;
+    if (pageVisible && !rafId) rafId = requestAnimationFrame(render);
+    if (!pageVisible && rafId) {
+      cancelAnimationFrame(rafId);
+      rafId = 0;
+    }
+  }
+
+  function start() {
+    applyConfig();
+    const fontsReady = document.fonts ? document.fonts.ready : Promise.resolve();
+    fontsReady.finally(() => {
+      resize();
+      requestAnimationFrame(() => body.classList.add("is-ready"));
+      rafId = requestAnimationFrame(render);
+    });
+  }
+
+  window.addEventListener("resize", resize, { passive: true });
+  window.addEventListener("scroll", updateScrollTarget, { passive: true });
+  window.addEventListener("pointermove", onPointerMove, { passive: true });
+  document.documentElement.addEventListener("pointerleave", onPointerLeave);
+  document.addEventListener("visibilitychange", onVisibilityChange);
+  document.addEventListener("keydown", onNavigationKeydown);
+  document.addEventListener("pointerdown", onNavigationPointerDown);
+  orbitNavToggle.addEventListener("click", () => setNavigationOpen(!navigationOpen, false));
+  orbitNavLinks.forEach((link) => link.addEventListener("click", () => setNavigationOpen(false, false)));
+  reducedMotion.addEventListener("change", resize);
+  finePointer.addEventListener("change", () => body.classList.remove("has-pointer"));
+
+  start();
+})();

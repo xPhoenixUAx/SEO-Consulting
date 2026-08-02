@@ -1,0 +1,118 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1080" viewBox="0 0 1800 1080">
+  <defs>
+    <style>
+      .mono { font-family: "IBM Plex Mono", "Courier New", monospace; }
+      .sans { font-family: "Arial Narrow", "Helvetica Neue", Arial, sans-serif; }
+      .cream { fill: #f0ede4; }
+      .acid { fill: #d8ff00; }
+      .muted { fill: #77786f; }
+    </style>
+  </defs>
+
+  <rect width="1800" height="1080" fill="#050504"/>
+  <path d="M70 164H1730" stroke="#292a25"/>
+  <text x="70" y="76" class="mono cream" font-size="18" letter-spacing="5">ORBIT / IDENTITY STUDY 02</text>
+  <text x="1730" y="77" class="mono muted" font-size="13" letter-spacing="3" text-anchor="end">THREE FURTHER DIRECTIONS</text>
+  <text x="70" y="125" class="sans cream" font-size="52" font-weight="800" letter-spacing="-2">Less orbit. More identity.</text>
+
+  <!-- 04 / MODULAR O -->
+  <g transform="translate(70 205)">
+    <rect width="520" height="760" rx="2" fill="#0b0b09" stroke="#2d2e29"/>
+    <text x="30" y="48" class="mono acid" font-size="13" letter-spacing="3">04</text>
+    <text x="490" y="48" class="mono muted" font-size="12" letter-spacing="2" text-anchor="end">MODULAR SYSTEM</text>
+
+    <g transform="translate(125 110)">
+      <rect x="0" y="0" width="270" height="58" class="cream"/>
+      <rect x="0" y="262" width="270" height="58" class="cream"/>
+      <rect x="0" y="58" width="58" height="92" class="cream"/>
+      <rect x="0" y="170" width="58" height="92" class="cream"/>
+      <rect x="212" y="58" width="58" height="70" class="cream"/>
+      <rect x="212" y="192" width="58" height="70" class="cream"/>
+      <rect x="212" y="128" width="58" height="64" class="acid"/>
+    </g>
+
+    <text x="30" y="518" class="sans cream" font-size="34" font-weight="800" letter-spacing="1">MODULAR O</text>
+    <text x="30" y="553" class="mono muted" font-size="12" letter-spacing="1.4">STRUCTURE / SYSTEM / PRECISION</text>
+    <path d="M30 590H490" stroke="#24251f"/>
+
+    <g transform="translate(30 625)">
+      <rect width="460" height="78" fill="#f0ede4"/>
+      <rect x="15" y="15" width="48" height="48" fill="#050504"/>
+      <g transform="translate(22 20) scale(.108)">
+        <rect x="0" y="0" width="270" height="58" fill="#f0ede4"/>
+        <rect x="0" y="262" width="270" height="58" fill="#f0ede4"/>
+        <rect x="0" y="58" width="58" height="92" fill="#f0ede4"/>
+        <rect x="0" y="170" width="58" height="92" fill="#f0ede4"/>
+        <rect x="212" y="58" width="58" height="70" fill="#f0ede4"/>
+        <rect x="212" y="192" width="58" height="70" fill="#f0ede4"/>
+        <rect x="212" y="128" width="58" height="64" fill="#d8ff00"/>
+      </g>
+      <text x="82" y="34" class="mono" fill="#050504" font-size="14" font-weight="700" letter-spacing="4">ORBIT</text>
+      <text x="82" y="53" class="mono muted" font-size="7" letter-spacing="2">SEO CONSULTING</text>
+      <text x="437" y="44" class="mono muted" font-size="8" letter-spacing="1.5" text-anchor="end">HEADER / 44 PX</text>
+    </g>
+  </g>
+
+  <!-- 05 / OR LIGATURE -->
+  <g transform="translate(640 205)">
+    <rect width="520" height="760" rx="2" fill="#0b0b09" stroke="#2d2e29"/>
+    <text x="30" y="48" class="mono acid" font-size="13" letter-spacing="3">05</text>
+    <text x="490" y="48" class="mono muted" font-size="12" letter-spacing="2" text-anchor="end">O / R LIGATURE</text>
+
+    <g transform="translate(112 108)">
+      <path class="cream" fill-rule="evenodd" d="M70 0H190C234 0 260 26 260 70V250C260 294 234 320 190 320H70C26 320 0 294 0 250V70C0 26 26 0 70 0ZM89 66C76 66 69 74 69 87V233C69 246 76 254 89 254H171C184 254 191 246 191 233V87C191 74 184 66 171 66H89Z"/>
+      <rect x="188" y="128" width="79" height="48" fill="#0b0b09"/>
+      <path d="M190 148H232L296 320H229L180 176Z" class="acid"/>
+      <rect x="190" y="128" width="49" height="48" class="cream"/>
+    </g>
+
+    <text x="30" y="518" class="sans cream" font-size="34" font-weight="800" letter-spacing="1">OR LIGATURE</text>
+    <text x="30" y="553" class="mono muted" font-size="12" letter-spacing="1.4">OWNABLE / COMPACT / DIRECTIONAL</text>
+    <path d="M30 590H490" stroke="#24251f"/>
+
+    <g transform="translate(30 625)">
+      <rect width="460" height="78" fill="#f0ede4"/>
+      <rect x="15" y="15" width="48" height="48" fill="#050504"/>
+      <g transform="translate(22 20) scale(.108)">
+        <path fill="#f0ede4" fill-rule="evenodd" d="M70 0H190C234 0 260 26 260 70V250C260 294 234 320 190 320H70C26 320 0 294 0 250V70C0 26 26 0 70 0ZM89 66C76 66 69 74 69 87V233C69 246 76 254 89 254H171C184 254 191 246 191 233V87C191 74 184 66 171 66H89Z"/>
+        <rect x="188" y="128" width="79" height="48" fill="#050504"/>
+        <path d="M190 148H232L296 320H229L180 176Z" fill="#d8ff00"/>
+        <rect x="190" y="128" width="49" height="48" fill="#f0ede4"/>
+      </g>
+      <text x="82" y="34" class="mono" fill="#050504" font-size="14" font-weight="700" letter-spacing="4">ORBIT</text>
+      <text x="82" y="53" class="mono muted" font-size="7" letter-spacing="2">SEO CONSULTING</text>
+      <text x="437" y="44" class="mono muted" font-size="8" letter-spacing="1.5" text-anchor="end">HEADER / 44 PX</text>
+    </g>
+  </g>
+
+  <!-- 06 / STACKED WORDMARK -->
+  <g transform="translate(1210 205)">
+    <rect width="520" height="760" rx="2" fill="#0b0b09" stroke="#2d2e29"/>
+    <text x="30" y="48" class="mono acid" font-size="13" letter-spacing="3">06</text>
+    <text x="490" y="48" class="mono muted" font-size="12" letter-spacing="2" text-anchor="end">EDITORIAL LOCKUP</text>
+
+    <g transform="translate(98 105)">
+      <text x="0" y="150" class="sans cream" font-size="176" font-weight="900" letter-spacing="-16">OR</text>
+      <text x="0" y="310" class="sans cream" font-size="176" font-weight="900" letter-spacing="-16">BIT</text>
+      <rect x="264" y="277" width="57" height="20" class="acid"/>
+    </g>
+
+    <text x="30" y="518" class="sans cream" font-size="34" font-weight="800" letter-spacing="1">OR / BIT STACK</text>
+    <text x="30" y="553" class="mono muted" font-size="12" letter-spacing="1.4">EDITORIAL / BOLD / HUMAN</text>
+    <path d="M30 590H490" stroke="#24251f"/>
+
+    <g transform="translate(30 625)">
+      <rect width="460" height="78" fill="#f0ede4"/>
+      <rect x="15" y="15" width="48" height="48" fill="#050504"/>
+      <text x="20" y="37" class="sans cream" font-size="20" font-weight="900" letter-spacing="-2">OR</text>
+      <text x="20" y="55" class="sans cream" font-size="20" font-weight="900" letter-spacing="-2">BIT</text>
+      <rect x="49" y="53" width="8" height="3" class="acid"/>
+      <text x="82" y="34" class="mono" fill="#050504" font-size="14" font-weight="700" letter-spacing="4">ORBIT</text>
+      <text x="82" y="53" class="mono muted" font-size="7" letter-spacing="2">SEO CONSULTING</text>
+      <text x="437" y="44" class="mono muted" font-size="8" letter-spacing="1.5" text-anchor="end">HEADER / 44 PX</text>
+    </g>
+  </g>
+
+  <text x="70" y="1020" class="mono muted" font-size="12" letter-spacing="2">SIX TOTAL DIRECTIONS / ALL PURE VECTOR / ALL TESTED AT HEADER SCALE</text>
+  <rect x="1672" y="1004" width="58" height="6" class="acid"/>
+</svg>

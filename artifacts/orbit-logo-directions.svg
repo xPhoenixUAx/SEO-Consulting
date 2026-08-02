@@ -1,0 +1,107 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1080" viewBox="0 0 1800 1080">
+  <defs>
+    <style>
+      .mono { font-family: "IBM Plex Mono", "Courier New", monospace; }
+      .sans { font-family: "Arial Narrow", "Helvetica Neue", Arial, sans-serif; }
+      .cream { fill: #f0ede4; }
+      .acid { fill: #d8ff00; }
+      .muted { fill: #77786f; }
+    </style>
+  </defs>
+
+  <rect width="1800" height="1080" fill="#050504"/>
+  <path d="M70 164H1730" stroke="#292a25" stroke-width="1"/>
+  <text x="70" y="76" class="mono cream" font-size="18" letter-spacing="5">ORBIT / IDENTITY STUDY</text>
+  <text x="1730" y="77" class="mono muted" font-size="13" letter-spacing="3" text-anchor="end">THREE VECTOR DIRECTIONS</text>
+  <text x="70" y="125" class="sans cream" font-size="52" font-weight="800" letter-spacing="-2">A sharper mark for BE ORBIT.</text>
+
+  <!-- 01 / CUT O -->
+  <g transform="translate(70 205)">
+    <rect width="520" height="760" rx="2" fill="#0b0b09" stroke="#2d2e29"/>
+    <text x="30" y="48" class="mono acid" font-size="13" letter-spacing="3">01</text>
+    <text x="490" y="48" class="mono muted" font-size="12" letter-spacing="2" text-anchor="end">RECOMMENDED</text>
+
+    <g transform="translate(125 118)">
+      <path class="cream" fill-rule="evenodd" d="M70 0H200C244 0 270 26 270 70V250C270 294 244 320 200 320H70C26 320 0 294 0 250V70C0 26 26 0 70 0ZM91 69C78 69 70 77 70 91V229C70 243 78 251 91 251H179C193 251 200 243 200 229V91C200 77 193 69 179 69H91Z"/>
+      <rect x="198" y="137" width="75" height="46" fill="#0b0b09"/>
+      <rect x="244" y="137" width="26" height="46" class="acid"/>
+    </g>
+
+    <text x="30" y="518" class="sans cream" font-size="34" font-weight="800" letter-spacing="1">CUT O</text>
+    <text x="30" y="553" class="mono muted" font-size="12" letter-spacing="1.4">TYPOGRAPHIC / DIRECT / MEMORABLE</text>
+    <path d="M30 590H490" stroke="#24251f"/>
+
+    <g transform="translate(30 625)">
+      <rect width="460" height="78" rx="1" fill="#f0ede4"/>
+      <rect x="15" y="15" width="48" height="48" fill="#050504"/>
+      <g transform="translate(25 22) scale(.104)">
+        <path fill="#f0ede4" fill-rule="evenodd" d="M70 0H200C244 0 270 26 270 70V250C270 294 244 320 200 320H70C26 320 0 294 0 250V70C0 26 26 0 70 0ZM91 69C78 69 70 77 70 91V229C70 243 78 251 91 251H179C193 251 200 243 200 229V91C200 77 193 69 179 69H91Z"/>
+        <rect x="198" y="137" width="75" height="46" fill="#050504"/>
+        <rect x="244" y="137" width="26" height="46" fill="#d8ff00"/>
+      </g>
+      <text x="82" y="34" class="mono" fill="#050504" font-size="14" font-weight="700" letter-spacing="4">ORBIT</text>
+      <text x="82" y="53" class="mono" fill="#77786f" font-size="7" letter-spacing="2">SEO CONSULTING</text>
+      <text x="437" y="44" class="mono" fill="#77786f" font-size="8" letter-spacing="1.5" text-anchor="end">HEADER / 44 PX</text>
+    </g>
+  </g>
+
+  <!-- 02 / INDEX FRAME -->
+  <g transform="translate(640 205)">
+    <rect width="520" height="760" rx="2" fill="#0b0b09" stroke="#2d2e29"/>
+    <text x="30" y="48" class="mono acid" font-size="13" letter-spacing="3">02</text>
+    <text x="490" y="48" class="mono muted" font-size="12" letter-spacing="2" text-anchor="end">INDEX / FRAME</text>
+
+    <g transform="translate(91 108)">
+      <path d="M54 28H0V108M0 212V292H54" fill="none" stroke="#d8ff00" stroke-width="18"/>
+      <path d="M284 28H338V108M338 212V292H284" fill="none" stroke="#f0ede4" stroke-width="18"/>
+      <path class="cream" fill-rule="evenodd" d="M126 0H212C250 0 272 23 272 61V259C272 297 250 320 212 320H126C88 320 66 297 66 259V61C66 23 88 0 126 0ZM143 66C132 66 126 73 126 84V236C126 247 132 254 143 254H195C206 254 212 247 212 236V84C212 73 206 66 195 66H143Z"/>
+    </g>
+
+    <text x="30" y="518" class="sans cream" font-size="34" font-weight="800" letter-spacing="1">INDEX FRAME</text>
+    <text x="30" y="553" class="mono muted" font-size="12" letter-spacing="1.4">FOUND / FRAMED / INDEXED</text>
+    <path d="M30 590H490" stroke="#24251f"/>
+
+    <g transform="translate(30 625)">
+      <rect width="460" height="78" rx="1" fill="#f0ede4"/>
+      <rect x="15" y="15" width="48" height="48" fill="#050504"/>
+      <g transform="translate(21 19) scale(.13)">
+        <path d="M54 28H0V108M0 212V292H54" fill="none" stroke="#d8ff00" stroke-width="18"/>
+        <path d="M284 28H338V108M338 212V292H284" fill="none" stroke="#f0ede4" stroke-width="18"/>
+        <path fill="#f0ede4" fill-rule="evenodd" d="M126 0H212C250 0 272 23 272 61V259C272 297 250 320 212 320H126C88 320 66 297 66 259V61C66 23 88 0 126 0ZM143 66C132 66 126 73 126 84V236C126 247 132 254 143 254H195C206 254 212 247 212 236V84C212 73 206 66 195 66H143Z"/>
+      </g>
+      <text x="82" y="34" class="mono" fill="#050504" font-size="14" font-weight="700" letter-spacing="4">ORBIT</text>
+      <text x="82" y="53" class="mono" fill="#77786f" font-size="7" letter-spacing="2">SEO CONSULTING</text>
+      <text x="437" y="44" class="mono" fill="#77786f" font-size="8" letter-spacing="1.5" text-anchor="end">HEADER / 44 PX</text>
+    </g>
+  </g>
+
+  <!-- 03 / WORDMARK -->
+  <g transform="translate(1210 205)">
+    <rect width="520" height="760" rx="2" fill="#0b0b09" stroke="#2d2e29"/>
+    <text x="30" y="48" class="mono acid" font-size="13" letter-spacing="3">03</text>
+    <text x="490" y="48" class="mono muted" font-size="12" letter-spacing="2" text-anchor="end">FULL SIGNATURE</text>
+
+    <g transform="translate(45 180)">
+      <path class="cream" fill-rule="evenodd" d="M44 0H112C140 0 156 16 156 44V156C156 184 140 200 112 200H44C16 200 0 184 0 156V44C0 16 16 0 44 0ZM61 44C51 44 46 49 46 60V140C46 151 51 156 61 156H95C105 156 110 151 110 140V60C110 49 105 44 95 44H61Z"/>
+      <text x="146" y="156" class="sans cream" font-size="150" font-weight="900" letter-spacing="-13">RBIT</text>
+      <rect x="396" y="176" width="33" height="9" class="acid"/>
+    </g>
+
+    <text x="30" y="518" class="sans cream" font-size="34" font-weight="800" letter-spacing="1">ORBIT WORDMARK</text>
+    <text x="30" y="553" class="mono muted" font-size="12" letter-spacing="1.4">EDITORIAL / CREDIBLE / COMPLETE</text>
+    <path d="M30 590H490" stroke="#24251f"/>
+
+    <g transform="translate(30 625)">
+      <rect width="460" height="78" rx="1" fill="#f0ede4"/>
+      <g transform="translate(17 23) scale(.16)">
+        <path fill="#050504" fill-rule="evenodd" d="M44 0H112C140 0 156 16 156 44V156C156 184 140 200 112 200H44C16 200 0 184 0 156V44C0 16 16 0 44 0ZM61 44C51 44 46 49 46 60V140C46 151 51 156 61 156H95C105 156 110 151 110 140V60C110 49 105 44 95 44H61Z"/>
+      </g>
+      <text x="44" y="47" class="sans" fill="#050504" font-size="34" font-weight="900" letter-spacing="-2">RBIT</text>
+      <rect x="105" y="53" width="12" height="3" class="acid"/>
+      <text x="437" y="44" class="mono" fill="#77786f" font-size="8" letter-spacing="1.5" text-anchor="end">WORDMARK / 92 PX</text>
+    </g>
+  </g>
+
+  <text x="70" y="1020" class="mono muted" font-size="12" letter-spacing="2">NO GLOW / NO ORBIT DOT / NO GENERIC TECH ICONOGRAPHY</text>
+  <rect x="1672" y="1004" width="58" height="6" class="acid"/>
+</svg>

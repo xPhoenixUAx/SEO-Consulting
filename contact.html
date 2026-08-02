@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <meta name="description" content="Contact ORBIT SEO Consulting about SEO services, advertising opportunities and tailored business collaborations.">
+  <title>Contact — ORBIT SEO Consulting</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="service-pages.css">
+  <link rel="stylesheet" href="contact-page.css">
+</head>
+<body class="contact-page">
+  <a class="skip-link" href="#main">SKIP TO CONTENT</a>
+
+  <header class="service-header" aria-label="Contact page navigation">
+    <a class="service-header__brand" href="index.html#top" aria-label="ORBIT SEO Consulting home">
+      <span class="brand-mark" aria-hidden="true">
+        <span class="brand-mark__row brand-mark__row--top">OR/</span>
+        <span class="brand-mark__row brand-mark__row--bottom">BIT</span>
+        <i class="brand-mark__accent"></i>
+      </span>
+      <span class="service-header__type"><strong data-config="brandName">ORBIT</strong><small data-config="brandDescriptor">SEO CONSULTING</small></span>
+    </a>
+    <nav class="service-header__nav" aria-label="Main pages">
+      <a href="audit-technical-seo.html">AUDIT &amp; TECHNICAL</a>
+      <a href="content-strategy.html">CONTENT STRATEGY</a>
+      <a href="authority-growth.html">AUTHORITY &amp; GROWTH</a>
+      <a href="contact.html" aria-current="page">CONTACT</a>
+    </nav>
+    <a class="service-header__back" href="index.html#about" data-config-href="contactPageBackHref"><i data-lucide="arrow-left"></i><span data-config="contactPageBackLabel">BACK HOME</span></a>
+  </header>
+
+  <main id="main">
+    <section class="contact-hero" id="top" data-theme="dark" aria-labelledby="contact-page-title">
+      <div class="contact-hero__meta">
+        <span data-config="contactPageMeta">CONTACT / NEW BUSINESS</span>
+        <span data-config="companyAddress">WARSAW, POLAND</span>
+      </div>
+      <h1 id="contact-page-title">
+        <span data-config="contactPageTitleOne">MAKE THE NEXT</span>
+        <strong data-config="contactPageTitleTwo">MOVE CLEAR.</strong>
+      </h1>
+      <div class="contact-hero__lower">
+        <p data-config="contactPageIntro">Tell us where the business is going, what the website is expected to do and what currently feels unclear. We will start with the useful questions.</p>
+        <a href="#inquiry"><span data-config="contactPageScrollLabel">START THE CONVERSATION</span><i data-lucide="arrow-down" aria-hidden="true"></i></a>
+      </div>
+    </section>
+
+    <section class="contact-guide" data-theme="light" aria-labelledby="contact-guide-title">
+      <header class="contact-guide__header reveal">
+        <p data-config="contactPageGuideEyebrow">A USEFUL FIRST MESSAGE</p>
+        <h2 id="contact-guide-title" data-config="contactPageGuideTitle">GIVE US THE CONTEXT. WE'LL FIND THE SEARCH OPPORTUNITY.</h2>
+      </header>
+      <div class="contact-guide__body">
+        <p class="contact-guide__intro reveal" data-config="contactPageGuideCopy">You do not need to arrive with an SEO diagnosis. A concise picture of the business, the website and the outcome you need is enough for us to prepare a focused response.</p>
+        <dl class="contact-guide__points reveal">
+          <div><dt data-config="contactPageContextTitle">THE BUSINESS</dt><dd data-config="contactPageContextCopy">What you sell, who needs it and which part of the offer matters most right now.</dd></div>
+          <div><dt data-config="contactPageFrictionTitle">THE FRICTION</dt><dd data-config="contactPageFrictionCopy">What is underperforming, changing or becoming difficult for the team to explain.</dd></div>
+          <div><dt data-config="contactPageDirectionTitle">THE DIRECTION</dt><dd data-config="contactPageDirectionCopy">What a useful outcome would look like over the next three to six months.</dd></div>
+        </dl>
+      </div>
+    </section>
+
+    <section class="contact-inquiry" id="inquiry" data-theme="dark" aria-labelledby="contact-inquiry-title">
+      <header class="contact-inquiry__header reveal">
+        <p data-config="contactPageFormEyebrow">YOUR BRIEF / OUR RESPONSE</p>
+        <h2 id="contact-inquiry-title" data-config="contactPageFormTitle">START WITH WHAT YOU KNOW.</h2>
+      </header>
+
+      <div class="contact-inquiry__layout">
+        <div class="contact-inquiry__context reveal">
+          <p data-config="contactPageFormIntro">Share the essentials below. We will review the request and respond with the most relevant next step, not a generic sales sequence.</p>
+          <div>
+            <span data-config="collaborateTitle">ADVERTISE &amp; COLLABORATE</span>
+            <p data-config="collaborateText">We are always open to new opportunities, high-impact collaborations, and tailored business partnerships. Whether you want to advertise your brand to our audience, launch a joint project, or book our professional services, we are ready to bring your ideas to life. Every business is unique, and we don't believe in one-size-fits-all solutions. Please reach out to us using the contact form below, tell us a bit about your goals, and our team will get back to you with an exclusive, custom-tailored proposal designed strictly for your budget and objectives. Let’s build something great together.</p>
+          </div>
+          <address>
+            <span data-config="companyName">ORBIT SEO CONSULTING</span>
+            <a href="mailto:hello@orbit-seo.com" data-config-href="corporateEmailHref" data-config="corporateEmail">HELLO@ORBIT-SEO.COM</a>
+          </address>
+        </div>
+
+        <form class="contact-page-form reveal" id="contact-form" action="contact-handler.php" method="post" data-config-action="contactFormEndpoint">
+          <div class="contact-page-form__row">
+            <label><span data-config="contactFormNameLabel">YOUR NAME</span><input type="text" name="name" autocomplete="name" minlength="2" maxlength="120" required></label>
+            <label><span data-config="contactFormEmailLabel">WORK EMAIL</span><input type="email" name="email" autocomplete="email" maxlength="180" required></label>
+          </div>
+          <div class="contact-page-form__row">
+            <label><span data-config="contactFormCompanyLabel">COMPANY / WEBSITE</span><input type="text" name="company" autocomplete="organization" maxlength="180"></label>
+            <label>
+              <span data-config="contactFormInterestLabel">I'M INTERESTED IN</span>
+              <select name="interest" required>
+                <option value="" selected disabled data-config="contactFormInterestPlaceholder">SELECT A DIRECTION</option>
+                <option value="seo-consulting" data-config="contactFormInterestSeo">SEO CONSULTING</option>
+                <option value="advertising" data-config="contactFormInterestAdvertising">ADVERTISING</option>
+                <option value="collaboration" data-config="contactFormInterestCollaboration">COLLABORATION</option>
+                <option value="other" data-config="contactFormInterestOther">OTHER</option>
+              </select>
+            </label>
+          </div>
+          <label class="contact-page-form__message"><span data-config="contactFormMessageLabel">TELL US ABOUT YOUR GOALS</span><textarea name="message" rows="6" minlength="20" maxlength="4000" required></textarea></label>
+          <label class="contact-page-form__honeypot" aria-hidden="true"><span>Leave this field empty</span><input type="text" name="website" tabindex="-1" autocomplete="off"></label>
+          <div class="contact-page-form__footer">
+            <p class="contact-page-form__status" role="status" aria-live="polite"></p>
+            <button type="submit"><span data-config="contactFormSubmitLabel">SEND YOUR REQUEST</span><i data-lucide="arrow-up-right" aria-hidden="true"></i></button>
+          </div>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <footer class="contact-footer" data-theme="light">
+    <a class="contact-footer__brand" href="index.html#top"><span data-config="brandName">ORBIT</span><small data-config="brandDescriptor">SEO CONSULTING</small></a>
+    <nav aria-label="Footer navigation"><a href="index.html#services">SERVICES</a><a href="index.html#process">90 DAYS</a><a href="index.html#about">ABOUT</a></nav>
+    <div><span data-config="footerLegal">© 2026 ORBIT SEO CONSULTING</span><nav class="contact-footer__legal" aria-label="Legal pages"><a href="privacy-policy.html" data-config="privacyPolicyLabel">PRIVACY</a><a href="cookies-policy.html" data-config="cookiesPolicyLabel">COOKIES</a><a href="terms-of-service.html" data-config="termsOfServiceLabel">TERMS</a></nav><a href="#top">BACK TO TOP <i data-lucide="arrow-up"></i></a></div>
+  </footer>
+
+  <script src="https://unpkg.com/lucide@1.17.0/dist/umd/lucide.min.js"></script>
+  <script src="config.js"></script>
+  <script src="service-pages.js"></script>
+</body>
+</html>
