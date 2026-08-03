@@ -3,6 +3,16 @@
   color: var(--black);
 }
 
+.legal-contact__action > p,
+.legal-contact__action p { font-size: 14px; line-height: 1.65; }
+.legal-footer { font-size: 9px; }
+
+@media (max-width: 820px) {
+  .legal-contact__action > p,
+  .legal-contact__action p { font-size: 14px; }
+  .legal-footer { font-size: 9px; }
+}
+
 .legal-page .service-header {
   color: var(--black);
 }
@@ -566,4 +576,15 @@
     gap: 15px;
     margin-top: 74px;
   }
+}
+
+/* Legal headings favor clarity while retaining the same condensed family. */
+.legal-hero h1,
+.legal-copy h2,
+.legal-contact h2 {
+  word-spacing: .18em;
+}
+
+.legal-copy h3 {
+  word-spacing: .12em;
 }

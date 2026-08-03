@@ -23,10 +23,15 @@
   const orbitContext = orbitCanvas.getContext("2d", { alpha: true });
   const orbitLetter = document.querySelector(".orbit-title__letter");
   const orbitTail = document.querySelector(".orbit-title__tail");
+  const siteHeader = document.querySelector(".site-header");
+  const heroNavToggle = document.getElementById("hero-nav-toggle");
   const orbitNavigation = document.getElementById("orbit-navigation");
   const orbitNavToggle = document.getElementById("orbit-nav-toggle");
   const orbitNavPanel = document.getElementById("site-navigation");
   const orbitNavHint = document.querySelector(".orbit-nav__hint");
+  const servicesNavGroup = document.getElementById("services-nav-group");
+  const servicesNavToggle = document.getElementById("services-nav-toggle");
+  const servicesNavMenu = document.getElementById("services-nav-menu");
   const orbitNavLinks = Array.from(document.querySelectorAll(".orbit-nav__links a"));
   let activeNavigationEntries = [];
   const sceneFour = document.getElementById("work");
@@ -41,7 +46,7 @@
   const editorialMedia = Array.from(document.querySelectorAll(".service-editorial__media"));
   const storySection = document.getElementById("system");
   const storyClosingSection = document.querySelector(".system-story__closing");
-  const storyLightSections = Array.from(document.querySelectorAll(".system-story__chapters, .system-story__closing, .about-section__intro, .site-footer"));
+  const storyLightSections = Array.from(document.querySelectorAll(".system-story__closing, .about-section__intro, .fit-section, .engagement-section, .insights-section, .site-footer"));
   const storyMedia = Array.from(document.querySelectorAll(".story-media"));
   const serviceDisclosureGroups = Array.from(document.querySelectorAll(".service-disclosures"));
   const faqItems = Array.from(document.querySelectorAll(".faq-item"));
@@ -100,7 +105,9 @@
   let storyAcidVisible = false;
   let pageVisible = true;
   let navigationOpen = false;
+  let servicesDropdownOpen = false;
   let logoDocked = false;
+  let heroNavigationAvailable = true;
   const orbitLogoTarget = { x: window.innerWidth * 0.5, y: window.innerHeight * 0.5 };
 
   const pointer = {
@@ -147,6 +154,21 @@
     document.querySelectorAll("[data-config-action]").forEach((element) => {
       const value = config[element.dataset.configAction];
       if (typeof value === "string" && value.trim()) element.setAttribute("action", value.trim());
+    });
+
+    document.querySelectorAll("[data-config-src]").forEach((element) => {
+      const value = config[element.dataset.configSrc];
+      if (typeof value === "string" && value.trim()) element.setAttribute("src", value.trim());
+    });
+
+    document.querySelectorAll("[data-config-alt]").forEach((element) => {
+      const value = config[element.dataset.configAlt];
+      if (typeof value === "string") element.setAttribute("alt", value);
+    });
+
+    document.querySelectorAll("[data-config-visible]").forEach((element) => {
+      const value = config[element.dataset.configVisible];
+      element.hidden = !(typeof value === "string" && value.trim());
     });
 
     workChapters.forEach((chapter) => {
@@ -575,7 +597,7 @@
     activeNavigationEntries = orbitNavLinks.map((link) => {
       const href = link.getAttribute("href") || "";
       if (!href.startsWith("#")) return null;
-      const target = document.querySelector(href);
+      const target = document.querySelector(link.dataset.activeFrom || href);
       return target ? { link, target } : null;
     }).filter(Boolean);
     updateActiveNavigation();
@@ -627,6 +649,10 @@
     root.style.setProperty("--atmosphere-opacity", clamp(1 - smoothScroll, 0, 1).toFixed(4));
     root.style.setProperty("--header-y", `${(-smoothScroll * 18).toFixed(2)}px`);
     root.style.setProperty("--header-opacity", clamp(1 - smoothScroll * 1.18, 0, 1).toFixed(4));
+    heroNavigationAvailable = heroVisible && targetScroll < 0.82;
+    siteHeader.classList.toggle("is-nav-available", heroNavigationAvailable);
+    heroNavToggle.tabIndex = heroNavigationAvailable ? 0 : -1;
+    heroNavToggle.setAttribute("aria-hidden", String(!heroNavigationAvailable));
 
     const sceneProgress = reducedMotion.matches ? 1 : smoothSceneScroll;
     const titleReveal = smoothstep(0.22, 0.92, smoothSceneEntry);
@@ -748,8 +774,8 @@
 
     logoDocked = targetOrbitScroll >= (reducedMotion.matches ? 0.95 : 0.985);
     orbitNavigation.classList.toggle("is-docked", logoDocked);
-    orbitNavToggle.tabIndex = logoDocked ? 0 : -1;
-    if (!logoDocked && navigationOpen) setNavigationOpen(false, false);
+    orbitNavToggle.tabIndex = logoDocked || navigationOpen ? 0 : -1;
+    if (!logoDocked && !heroNavigationAvailable && navigationOpen) setNavigationOpen(false, false);
     body.classList.toggle("is-orbit-scene", orbitVisible && darkReveal > 0.7);
 
     const workProgress = reducedMotion.matches ? targetWorkScroll : smoothWorkScroll;
@@ -899,6 +925,9 @@
         contactForm.reset();
         status.classList.add("is-success");
         status.textContent = config.contactFormSuccess || "Thank you! We have successfully received your request. Our team will review your information and get back to you shortly.";
+        const formEvent = { form: "homepage-contact", interest: String(formData.get("interest") || "") };
+        window.dispatchEvent(new CustomEvent("orbit:form-success", { detail: formEvent }));
+        if (Array.isArray(window.dataLayer)) window.dataLayer.push({ event: "form_submit_success", ...formEvent });
       } catch (error) {
         status.classList.add("is-error");
         status.textContent = config.contactFormError || "We could not send your request. Please try again or contact us by email.";
@@ -935,13 +964,6 @@
   }
 
   function updatePointer(now) {
-    const autonomous = !pointer.active || !finePointer.matches;
-    if (autonomous) {
-      const time = now * 0.00014;
-      pointer.tx = width * (0.67 + Math.sin(time * 1.7) * 0.11);
-      pointer.ty = height * (0.51 + Math.cos(time * 1.18) * 0.12);
-    }
-
     pointer.px = pointer.x;
     pointer.py = pointer.y;
     pointer.x += (pointer.tx - pointer.x) * 0.075;
@@ -950,25 +972,46 @@
   }
 
   function setNavigationOpen(nextState, restoreFocus = true) {
-    const next = Boolean(nextState && logoDocked);
+    const next = Boolean(nextState && (logoDocked || heroNavigationAvailable));
     navigationOpen = next;
     orbitNavigation.classList.toggle("is-open", next);
     orbitNavToggle.setAttribute("aria-expanded", String(next));
     orbitNavToggle.setAttribute("aria-label", next ? "Close navigation" : "Open navigation");
+    orbitNavToggle.tabIndex = next || logoDocked ? 0 : -1;
+    heroNavToggle.setAttribute("aria-expanded", String(next));
+    heroNavToggle.setAttribute("aria-label", next ? "Close navigation" : "Open navigation");
     orbitNavPanel.setAttribute("aria-hidden", String(!next));
     orbitNavPanel.inert = !next;
     orbitNavHint.textContent = next ? "CLOSE / NAVIGATION" : "OPEN / NAVIGATION";
     body.classList.toggle("nav-open", next);
+    if (!next) setServicesDropdownOpen(false);
 
-    if (!next && restoreFocus && document.activeElement !== orbitNavToggle) {
-      orbitNavToggle.focus({ preventScroll: true });
+    if (!next && restoreFocus) {
+      const focusTarget = logoDocked ? orbitNavToggle : heroNavToggle;
+      if (document.activeElement !== focusTarget) focusTarget.focus({ preventScroll: true });
     }
+  }
+
+  function setServicesDropdownOpen(nextState, restoreFocus = false) {
+    const next = Boolean(nextState && navigationOpen);
+    servicesDropdownOpen = next;
+    servicesNavGroup.classList.toggle("is-open", next);
+    orbitNavPanel.classList.toggle("has-services-open", next);
+    servicesNavToggle.setAttribute("aria-expanded", String(next));
+    servicesNavToggle.setAttribute("aria-label", next ? "Hide service pages" : "Show service pages");
+    servicesNavMenu.setAttribute("aria-hidden", String(!next));
+    servicesNavMenu.inert = !next;
+    if (!next && restoreFocus) servicesNavToggle.focus({ preventScroll: true });
   }
 
   function onNavigationKeydown(event) {
     if (!navigationOpen) return;
     if (event.key === "Escape") {
       event.preventDefault();
+      if (servicesDropdownOpen) {
+        setServicesDropdownOpen(false, true);
+        return;
+      }
       setNavigationOpen(false);
       return;
     }
@@ -1749,6 +1792,7 @@
   }
 
   function render(now) {
+    rafId = 0;
     if (!pageVisible) return;
     if (!startTime) startTime = now;
     if (now - lastFrame < 12) {
@@ -1795,7 +1839,21 @@
       drawWorkField(reducedMotion.matches ? 12 : seconds);
     }
 
-    rafId = requestAnimationFrame(render);
+    const animatedSceneVisible = heroVisible || sceneVisible || orbitVisible || workVisible;
+    const motionIsSettling = Math.abs(targetScroll - smoothScroll) > 0.001
+      || Math.abs(targetSceneScroll - smoothSceneScroll) > 0.001
+      || Math.abs(targetSceneEntry - smoothSceneEntry) > 0.001
+      || Math.abs(targetOrbitScroll - smoothOrbitScroll) > 0.001
+      || Math.abs(targetOrbitEntry - smoothOrbitEntry) > 0.001
+      || Math.abs(targetWorkScroll - smoothWorkScroll) > 0.001
+      || Math.abs(targetWorkEntry - smoothWorkEntry) > 0.001;
+    if ((animatedSceneVisible || motionIsSettling) && !reducedMotion.matches) {
+      rafId = requestAnimationFrame(render);
+    }
+  }
+
+  function requestRender() {
+    if (pageVisible && !rafId) rafId = requestAnimationFrame(render);
   }
 
   function onPointerMove(event) {
@@ -1808,6 +1866,7 @@
       cursorElement.style.top = `${event.clientY}px`;
       body.classList.add("has-pointer");
     }
+    requestRender();
   }
 
   function onPointerLeave() {
@@ -1817,7 +1876,7 @@
 
   function onVisibilityChange() {
     pageVisible = !document.hidden;
-    if (pageVisible && !rafId) rafId = requestAnimationFrame(render);
+    if (pageVisible) requestRender();
     if (!pageVisible && rafId) {
       cancelAnimationFrame(rafId);
       rafId = 0;
@@ -1857,14 +1916,30 @@
     });
   }
 
-  window.addEventListener("resize", resize, { passive: true });
-  window.addEventListener("scroll", updateScrollTarget, { passive: true });
+  window.addEventListener("resize", () => { resize(); requestRender(); }, { passive: true });
+  window.addEventListener("scroll", () => { updateScrollTarget(); requestRender(); }, { passive: true });
   window.addEventListener("pointermove", onPointerMove, { passive: true });
   document.documentElement.addEventListener("pointerleave", onPointerLeave);
   document.addEventListener("visibilitychange", onVisibilityChange);
   document.addEventListener("keydown", onNavigationKeydown);
   document.addEventListener("pointerdown", onNavigationPointerDown);
   orbitNavToggle.addEventListener("click", () => setNavigationOpen(!navigationOpen, false));
+  heroNavToggle.addEventListener("click", () => setNavigationOpen(!navigationOpen, false));
+  servicesNavToggle.addEventListener("click", (event) => {
+    event.stopPropagation();
+    setServicesDropdownOpen(width > 820 ? true : !servicesDropdownOpen);
+  });
+  servicesNavGroup.addEventListener("pointerenter", () => {
+    if (width > 820 && navigationOpen) setServicesDropdownOpen(true);
+  });
+  servicesNavGroup.addEventListener("pointerleave", () => {
+    if (width > 820 && navigationOpen) setServicesDropdownOpen(false);
+  });
+  servicesNavGroup.addEventListener("focusout", () => {
+    requestAnimationFrame(() => {
+      if (!servicesNavGroup.contains(document.activeElement)) setServicesDropdownOpen(false);
+    });
+  });
   orbitNavLinks.forEach((link) => link.addEventListener("click", () => setNavigationOpen(false, false)));
   reducedMotion.addEventListener("change", resize);
   finePointer.addEventListener("change", () => body.classList.remove("has-pointer"));

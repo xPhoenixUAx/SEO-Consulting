@@ -8,16 +8,15 @@
   <meta name="theme-color" content="#050504">
   <title>BE FOUND — SEO Consulting</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23050504'/%3E%3Ctext x='7' y='29' fill='%23f0ede4' font-family='Arial' font-weight='900' font-size='25'%3EOR%3C/text%3E%3Ctext x='7' y='53' fill='%23f0ede4' font-family='Arial' font-weight='900' font-size='25'%3EBIT%3C/text%3E%3Crect x='49' y='55' width='9' height='3' fill='%23d8ff00'/%3E%3C/svg%3E">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/fonts/fonts.css">
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="cookie-consent.css">
 </head>
 <body>
   <a class="skip-link" href="#scene-two">Skip the opening experience</a>
 
   <header class="site-header" aria-label="Site header">
-    <a class="brand" href="#top" aria-label="Orbit SEO Consulting, back to top">
+    <button class="brand" id="hero-nav-toggle" type="button" aria-expanded="false" aria-controls="site-navigation" aria-label="Open navigation">
       <span class="brand-mark brand-mark--static" aria-hidden="true">
         <span class="brand-mark__row brand-mark__row--top"><span>O</span><span>R</span></span>
         <span class="brand-mark__row brand-mark__row--bottom">BIT</span>
@@ -27,7 +26,7 @@
         <strong data-config="brandName">ORBIT</strong>
         <small data-config="brandDescriptor">SEO CONSULTING</small>
       </span>
-    </a>
+    </button>
     <div class="site-header__meta" aria-hidden="true">
       <span>SEARCH SYSTEMS</span>
       <span class="site-header__rule"></span>
@@ -159,7 +158,7 @@
 
         <div class="scene-four__topline" aria-hidden="true">
           <span>THE WORK</span>
-          <span>FROM DIAGNOSIS TO AUTHORITY</span>
+          <span>FOUR FORCES / ONE FIELD</span>
         </div>
 
         <div class="work-intro">
@@ -168,30 +167,30 @@
             <span data-config="workTitleOne">VISIBILITY</span>
             <span data-config="workTitleTwo">IS BUILT.</span>
           </h2>
-          <p class="work-intro__copy" data-config="workIntroCopy">Not through shortcuts. Through a system that can be inspected, corrected and strengthened.</p>
+          <p class="work-intro__copy" data-config="workIntroCopy">Four disciplines enter. One coherent search presence leaves.</p>
         </div>
 
         <div class="work-system">
           <div class="work-chapters">
             <article class="work-chapter" data-work-step="0">
               <h3 data-config="workAuditTitle">AUDIT</h3>
-              <p data-config="workAuditCopy">We map how search engines encounter the site and isolate the five issues doing the most damage to visibility.</p>
-              <small>CRAWL / INDEX / STRUCTURE</small>
+              <p data-config="workAuditCopy">See the whole system.</p>
+              <small>SEE / FRAME / REVEAL</small>
             </article>
             <article class="work-chapter" data-work-step="1">
               <h3 data-config="workTechnicalTitle">TECHNICAL</h3>
-              <p data-config="workTechnicalCopy">We repair the signals that make every page legible: titles, headings, internal links and technical foundations.</p>
-              <small>TITLES / HEADINGS / LINKS</small>
+              <p data-config="workTechnicalCopy">Remove the friction.</p>
+              <small>OPEN / ALIGN / STABILIZE</small>
             </article>
             <article class="work-chapter" data-work-step="2">
               <h3 data-config="workContentTitle">CONTENT</h3>
-              <p data-config="workContentCopy">We turn search demand into a focused editorial plan built around the language your audience actually uses.</p>
-              <small>INTENT / KEYWORDS / TOPICS</small>
+              <p data-config="workContentCopy">Shape the meaning.</p>
+              <small>QUESTION / MEANING / VOICE</small>
             </article>
             <article class="work-chapter" data-work-step="3">
               <h3 data-config="workAuthorityTitle">AUTHORITY</h3>
-              <p data-config="workAuthorityCopy">We create the conditions for trust to accumulate through useful content, credible links and consistent signals.</p>
-              <small>TRUST / LINKS / RELEVANCE</small>
+              <p data-config="workAuthorityCopy">Earn the gravity.</p>
+              <small>CITATION / MEMORY / GRAVITY</small>
             </article>
           </div>
 
@@ -203,7 +202,7 @@
         </p>
 
         <div class="scene-four__footer" aria-hidden="true">
-          <span>AUDIT / FIX / STRUCTURE / PUBLISH / EARN</span>
+          <span>SEE / CLARIFY / CONNECT / EARN</span>
           <i></i>
           <span>CONTINUE</span>
         </div>
@@ -334,20 +333,94 @@
 
     <section class="service-cta" aria-labelledby="service-cta-title">
       <div class="service-cta__heading editorial-reveal">
-        <p data-config="serviceCtaEyebrow">THE NEXT MOVE</p>
+        <p data-config="serviceCtaEyebrow">UNSURE WHERE TO BEGIN?</p>
         <h2 id="service-cta-title">
-          <span data-config="serviceCtaTitleOne">START WITH</span>
-          <strong data-config="serviceCtaTitleTwo">WHAT MATTERS.</strong>
+          <span data-config="serviceCtaTitleOne">BRING US</span>
+          <strong data-config="serviceCtaTitleTwo">THE PROBLEM.</strong>
         </h2>
       </div>
 
       <div class="service-cta__action editorial-reveal">
-        <p data-config="serviceCtaCopy">One audit. Five priorities. A clear direction for the next 90 days.</p>
-        <a href="#process" data-config-href="serviceCtaHref">
-          <span data-config="serviceCtaLabel">SEE THE FIRST 90 DAYS</span>
+        <p data-config="serviceCtaCopy">You do not need an SEO diagnosis. Tell us what is changing, underperforming or unclear.</p>
+        <a href="contact.html" data-config-href="serviceCtaHref">
+          <span data-config="serviceCtaLabel">FIND THE RIGHT START</span>
           <i aria-hidden="true"></i>
         </a>
       </div>
+    </section>
+
+    <section class="evidence-section" id="proof" aria-labelledby="evidence-title">
+      <header class="evidence-section__intro editorial-reveal">
+        <p class="editorial-eyebrow" data-config="evidenceEyebrow">THE EVIDENCE STANDARD</p>
+        <h2 id="evidence-title" data-config="evidenceTitle">PROOF BEFORE PROMISES.</h2>
+        <p data-config="evidenceIntro">We do not manufacture dramatic graphs or publish invented ranking wins. Progress is documented through decisions, completed changes and the business signals those changes are intended to improve.</p>
+      </header>
+
+      <div class="evidence-ledger">
+        <article class="evidence-entry editorial-reveal">
+          <div class="evidence-entry__meta"><span data-config="evidenceOneIndex">ARTIFACT / PRIORITY MAP</span><span data-config="evidenceOneTiming">IMPLEMENTATION READY</span></div>
+          <h3 data-config="evidenceOneTitle">The work arrives already ordered.</h3>
+          <p data-config="evidenceOneCopy">Findings are connected to affected templates, likely consequence, implementation effort and a clear owner. Your team receives a decision tool, not an undifferentiated export.</p>
+          <dl><div><dt data-config="evidenceArtifactLabel">ARTIFACT</dt><dd data-config="evidenceOneArtifact">Issue map / implementation notes</dd></div><div><dt data-config="evidenceSignalLabel">SIGNAL</dt><dd data-config="evidenceOneSignal">Crawl, indexation and template clarity</dd></div></dl>
+        </article>
+        <article class="evidence-entry editorial-reveal">
+          <div class="evidence-entry__meta"><span data-config="evidenceTwoIndex">ARTIFACT / DECISION RECORD</span><span data-config="evidenceTwoTiming">RATIONALE INCLUDED</span></div>
+          <h3 data-config="evidenceTwoTitle">Every page decision keeps its reason.</h3>
+          <p data-config="evidenceTwoCopy">Recommendations preserve the evidence behind them: the audience need, business value, affected page and intended signal. Context survives handoff instead of disappearing into a task list.</p>
+          <dl><div><dt data-config="evidenceArtifactLabel">ARTIFACT</dt><dd data-config="evidenceTwoArtifact">Decision log / page rationale</dd></div><div><dt data-config="evidenceSignalLabel">SIGNAL</dt><dd data-config="evidenceTwoSignal">Purpose, ownership and implementation clarity</dd></div></dl>
+        </article>
+        <article class="evidence-entry editorial-reveal">
+          <div class="evidence-entry__meta"><span data-config="evidenceThreeIndex">ARTIFACT / MEASUREMENT REVIEW</span><span data-config="evidenceThreeTiming">BUSINESS CONTEXT</span></div>
+          <h3 data-config="evidenceThreeTitle">Movement is explained, not decorated.</h3>
+          <p data-config="evidenceThreeCopy">Reviews separate shipped work, search response and business outcome. What changed, what did not and what deserves attention next remain visible without manufacturing certainty.</p>
+          <dl><div><dt data-config="evidenceArtifactLabel">ARTIFACT</dt><dd data-config="evidenceThreeArtifact">Change record / review narrative</dd></div><div><dt data-config="evidenceSignalLabel">SIGNAL</dt><dd data-config="evidenceThreeSignal">Qualified visibility, journeys and conversions</dd></div></dl>
+        </article>
+      </div>
+
+      <footer class="evidence-section__note editorial-reveal">
+        <p data-config="evidenceNote">CLIENT-SPECIFIC CASE STUDIES ARE PUBLISHED ONLY WITH PERMISSION. NO FICTIONAL METRICS.</p>
+        <a href="contact.html" data-config-href="navContactHref"><span data-config="evidenceCta">ASK FOR RELEVANT EXPERIENCE</span><i data-lucide="arrow-up-right" aria-hidden="true"></i></a>
+      </footer>
+    </section>
+
+    <section class="fit-section" id="fit" aria-labelledby="fit-title">
+      <header class="fit-section__intro editorial-reveal">
+        <p class="editorial-eyebrow" data-config="fitEyebrow">WORKING FIT</p>
+        <h2 id="fit-title" data-config="fitTitle">RIGHT PROBLEM. RIGHT PARTNERSHIP.</h2>
+        <p data-config="fitIntro">The work moves fastest when the business has genuine expertise, a site worth improving and people able to turn clear recommendations into real changes.</p>
+      </header>
+      <div class="fit-section__columns">
+        <article class="fit-column fit-column--positive editorial-reveal">
+          <p data-config="fitPositiveLabel">A STRONG FIT</p>
+          <ul>
+            <li><strong data-config="fitPositiveOneTitle">Established service and B2B businesses</strong><span data-config="fitPositiveOneCopy">You have a meaningful offer, but search does not yet communicate its full value.</span></li>
+            <li><strong data-config="fitPositiveTwoTitle">Teams ready to implement</strong><span data-config="fitPositiveTwoCopy">A developer, writer or decision-maker can act on an ordered plan.</span></li>
+            <li><strong data-config="fitPositiveThreeTitle">Experts with something useful to say</strong><span data-config="fitPositiveThreeCopy">The business can contribute real experience, evidence and perspective.</span></li>
+          </ul>
+        </article>
+        <article class="fit-column fit-column--negative editorial-reveal">
+          <p data-config="fitNegativeLabel">NOT THE RIGHT FIT</p>
+          <ul>
+            <li><strong data-config="fitNegativeOneTitle">Guaranteed rankings</strong><span data-config="fitNegativeOneCopy">No responsible consultant controls Google or promises page one in 30 days.</span></li>
+            <li><strong data-config="fitNegativeTwoTitle">Bulk content for its own sake</strong><span data-config="fitNegativeTwoCopy">Publishing volume is not a strategy when pages have no distinct purpose.</span></li>
+            <li><strong data-config="fitNegativeThreeTitle">Paid-link shortcuts</strong><span data-config="fitNegativeThreeCopy">We will not trade durable trust for a temporary and avoidable risk.</span></li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section class="engagement-section" id="engagement" aria-labelledby="engagement-title">
+      <header class="engagement-section__intro editorial-reveal">
+        <p class="editorial-eyebrow" data-config="engagementEyebrow">WAYS TO WORK TOGETHER</p>
+        <h2 id="engagement-title" data-config="engagementTitle">A SCOPE YOU CAN SEE.</h2>
+        <p data-config="engagementIntro">Every engagement begins with a written scope, defined outputs and a clear decision point. Pricing is tailored only after we understand the site, team and implementation reality.</p>
+      </header>
+      <div class="engagement-list">
+        <article class="engagement-row editorial-reveal"><span data-config="engagementOneMeta">DIAGNOSTIC / 2–4 WEEKS</span><h3 data-config="engagementOneTitle">SEO Diagnostic Sprint</h3><p data-config="engagementOneCopy">A focused audit, the five highest-impact priorities and an implementation-ready direction for the next 90 days.</p><strong data-config="engagementOnePrice">FIXED SCOPE / CUSTOM QUOTE</strong></article>
+        <article class="engagement-row editorial-reveal"><span data-config="engagementTwoMeta">PROGRAM / 90 DAYS</span><h3 data-config="engagementTwoTitle">Search Growth Direction</h3><p data-config="engagementTwoCopy">Technical correction, content architecture and authority priorities coordinated as one measurable program.</p><strong data-config="engagementTwoPrice">PROJECT SCOPE / CUSTOM QUOTE</strong></article>
+        <article class="engagement-row editorial-reveal"><span data-config="engagementThreeMeta">ADVISORY / MONTHLY</span><h3 data-config="engagementThreeTitle">Ongoing SEO Advisory</h3><p data-config="engagementThreeCopy">Senior guidance for internal teams that need prioritization, implementation review and a reliable decision partner.</p><strong data-config="engagementThreePrice">MONTHLY SCOPE / CUSTOM QUOTE</strong></article>
+      </div>
+      <a class="engagement-section__cta editorial-reveal" href="contact.html" data-config-href="navContactHref"><span data-config="engagementCta">DISCUSS THE RIGHT SCOPE</span><i data-lucide="arrow-up-right" aria-hidden="true"></i></a>
     </section>
 
     <section class="method-section" id="process" aria-labelledby="method-title">
@@ -380,6 +453,28 @@
         <h3 data-config="expectationTitle">SEO moves in months, not moments.</h3>
         <p data-config="expectationCopy">Meaningful changes usually become visible in three to six months while search engines crawl, reassess and compare. Anyone guaranteeing page one in 30 days is overselling.</p>
       </aside>
+    </section>
+
+    <section class="insights-section" id="insights" aria-labelledby="insights-title">
+      <header class="insights-section__intro editorial-reveal">
+        <p class="editorial-eyebrow" data-config="insightsEyebrow">FIELD NOTES</p>
+        <h2 id="insights-title" data-config="insightsTitle">THE FUNDAMENTALS TRAVEL FURTHER.</h2>
+        <p data-config="insightsIntro">Three practical notes for teams that want to make better search decisions before chasing another tactic.</p>
+      </header>
+      <div class="insights-list">
+        <details class="insight-note editorial-reveal">
+          <summary><span data-config="insightOneMeta">TECHNICAL / 06 MIN</span><strong data-config="insightOneTitle">What an SEO audit should help you decide</strong><i data-lucide="plus" aria-hidden="true"></i></summary>
+          <div><p data-config="insightOneCopyOne">An audit is useful only when it changes the order of work. A long export of warnings gives every issue equal visual weight, even though very few issues deserve equal business priority.</p><p data-config="insightOneCopyTwo">A decision-ready audit explains the affected templates, the search consequence, the implementation effort and who needs to act. It should make the next five moves obvious.</p><a href="audit-technical-seo.html" data-config-href="auditPageHref"><span data-config="insightServiceLink">EXPLORE THE RELATED SERVICE</span><i data-lucide="arrow-up-right" aria-hidden="true"></i></a></div>
+        </details>
+        <details class="insight-note editorial-reveal">
+          <summary><span data-config="insightTwoMeta">CONTENT / 07 MIN</span><strong data-config="insightTwoTitle">Why more content is often the wrong first move</strong><i data-lucide="plus" aria-hidden="true"></i></summary>
+          <div><p data-config="insightTwoCopyOne">A site can publish every week and still remain difficult to understand. New pages create value only when they answer a distinct need, strengthen an area of expertise and connect naturally to a useful next action.</p><p data-config="insightTwoCopyTwo">Before commissioning another article, clarify which intent it owns, what existing page it supports and what evidence only your business can contribute.</p><a href="content-strategy.html" data-config-href="contentPageHref"><span data-config="insightServiceLink">EXPLORE THE RELATED SERVICE</span><i data-lucide="arrow-up-right" aria-hidden="true"></i></a></div>
+        </details>
+        <details class="insight-note editorial-reveal">
+          <summary><span data-config="insightThreeMeta">AUTHORITY / 05 MIN</span><strong data-config="insightThreeTitle">A credible link has context before it has a metric</strong><i data-lucide="plus" aria-hidden="true"></i></summary>
+          <div><p data-config="insightThreeCopyOne">Authority is not improved by collecting the largest possible number of references. A useful link appears where the audience, subject and reason for citation genuinely overlap.</p><p data-config="insightThreeCopyTwo">The strongest direction starts with assets and expertise worth referencing, then identifies the publications, communities and relationships where that evidence belongs.</p><a href="authority-growth.html" data-config-href="authorityPageHref"><span data-config="insightServiceLink">EXPLORE THE RELATED SERVICE</span><i data-lucide="arrow-up-right" aria-hidden="true"></i></a></div>
+        </details>
+      </div>
     </section>
 
     <section class="faq-section" id="faq" aria-labelledby="faq-title">
@@ -457,74 +552,35 @@
 
     <section class="system-story" id="system" aria-labelledby="system-story-title">
       <header class="system-story__opening">
-        <p class="system-story__eyebrow editorial-reveal" data-config="systemStoryEyebrow">THE LONG VIEW</p>
+        <p class="system-story__eyebrow editorial-reveal" data-config="systemStoryEyebrow">ONE SEARCH / ONE DECISION</p>
         <h2 id="system-story-title" class="editorial-reveal">
-          <span data-config="systemStoryTitleOne">VISIBILITY IS NOT</span>
-          <strong data-config="systemStoryTitleTwo">A SINGLE WIN.</strong>
-          <span data-config="systemStoryTitleThree">IT IS A SYSTEM THAT COMPOUNDS.</span>
+          <span data-config="systemStoryTitleOne">A QUESTION</span>
+          <strong data-config="systemStoryTitleTwo">ENTERS SEARCH.</strong>
+          <span data-config="systemStoryTitleThree">A DECISION LEAVES WITH TRUST.</span>
         </h2>
         <div class="system-story__opening-copy editorial-reveal">
-          <p data-config="systemStoryIntroOne">The strongest search programs do not depend on one article, one link or one technical release. Each improvement creates better conditions for the work that follows.</p>
-          <p data-config="systemStoryIntroTwo">That is the real objective: a website that becomes easier to discover, clearer to interpret and more credible every time it grows.</p>
+          <p data-config="systemStoryIntroOne">Someone arrives with a problem, not a keyword list. The site has seconds to show that it recognizes the situation and has a credible answer.</p>
+          <p data-config="systemStoryIntroTwo">Technical access gets the page considered. Clear language makes it relevant. Evidence and a useful next step turn discovery into a business conversation.</p>
         </div>
       </header>
 
       <figure class="system-story__panorama story-media editorial-reveal">
         <img src="assets/images/website-implementation-warm-v1.webp" width="1727" height="911" loading="lazy" alt="Developer and SEO consultant checking the same business website on laptop and mobile">
         <figcaption>
-          <p data-config="systemFoundationEyebrow">A SEARCHABLE FOUNDATION</p>
-          <h3 data-config="systemFoundationTitle">REMOVE THE FRICTION BETWEEN THE SITE AND THE PEOPLE LOOKING FOR IT.</h3>
-          <span data-config="systemFoundationNote">CRAWL / INDEX / STRUCTURE</span>
+          <p data-config="systemFoundationEyebrow">THE MOMENT OF PROOF</p>
+          <h3 data-config="systemFoundationTitle">ANSWER THE QUESTION BEFORE ASKING FOR THE CONVERSION.</h3>
+          <span data-config="systemFoundationNote">QUERY / ANSWER / EVIDENCE / ACTION</span>
         </figcaption>
       </figure>
 
-      <div class="system-story__chapters">
-        <article class="system-chapter editorial-reveal">
-          <figure class="system-chapter__media story-media">
-            <img src="assets/images/expert-content-review-warm-v1.webp" width="1448" height="1086" loading="lazy" alt="Writer and subject expert reviewing and correcting an article draft together">
-          </figure>
-          <div class="system-chapter__body">
-            <p class="system-story__eyebrow" data-config="systemContentEyebrow">CONTENT WITH A JOB TO DO</p>
-            <h3 data-config="systemContentTitle">TURN QUESTIONS INTO A BODY OF KNOWLEDGE.</h3>
-            <p data-config="systemContentCopy">Search demand becomes valuable only when it is shaped into pages that answer real needs, express genuine expertise and lead naturally toward a useful next step.</p>
-            <ul class="system-chapter__signals" aria-label="Content system outcomes">
-              <li><span data-config="systemContentSignalOne">Every page owns a distinct search intent.</span><i data-lucide="corner-down-right" aria-hidden="true"></i></li>
-              <li><span data-config="systemContentSignalTwo">Related ideas strengthen one another.</span><i data-lucide="corner-down-right" aria-hidden="true"></i></li>
-              <li><span data-config="systemContentSignalThree">Publishing follows priority, not volume.</span><i data-lucide="corner-down-right" aria-hidden="true"></i></li>
-            </ul>
-          </div>
-        </article>
-
-        <blockquote class="system-story__statement editorial-reveal">
-          <p data-config="systemStatement">A GOOD SEARCH STRATEGY LEAVES THE WEBSITE MORE COHERENT THAN IT FOUND IT.</p>
-          <footer data-config="systemStatementNote">NOT MORE COMPLEX. MORE UNDERSTANDABLE.</footer>
-        </blockquote>
-
-        <article class="system-chapter system-chapter--reverse editorial-reveal">
-          <figure class="system-chapter__media story-media">
-            <img src="assets/images/professional-authority-warm-v1.webp" width="1535" height="1024" loading="lazy" alt="Experienced specialist sharing practical knowledge with an attentive professional audience">
-          </figure>
-          <div class="system-chapter__body">
-            <p class="system-story__eyebrow" data-config="systemAuthorityEyebrow">AUTHORITY THAT HAS CONTEXT</p>
-            <h3 data-config="systemAuthorityTitle">EARN RECOGNITION THAT MEANS SOMETHING.</h3>
-            <p data-config="systemAuthorityCopy">Trust accumulates when useful work is recognized in the right places and the site consistently demonstrates depth around the subjects it intends to own.</p>
-            <ul class="system-chapter__signals" aria-label="Authority system outcomes">
-              <li><span data-config="systemAuthoritySignalOne">References come from relevant environments.</span><i data-lucide="corner-down-right" aria-hidden="true"></i></li>
-              <li><span data-config="systemAuthoritySignalTwo">Expertise is connected, not fragmented.</span><i data-lucide="corner-down-right" aria-hidden="true"></i></li>
-              <li><span data-config="systemAuthoritySignalThree">Growth is judged by business value.</span><i data-lucide="corner-down-right" aria-hidden="true"></i></li>
-            </ul>
-          </div>
-        </article>
-      </div>
-
       <footer class="system-story__closing">
         <div class="system-story__closing-heading editorial-reveal">
-          <p data-config="systemClosingEyebrow">THE PRINCIPLE</p>
-          <h2 data-config="systemClosingTitle">EACH CHANGE SHOULD MAKE THE NEXT ONE MORE VALUABLE.</h2>
+          <p data-config="systemClosingEyebrow">THE COMPLETE JOURNEY</p>
+          <h2 data-config="systemClosingTitle">FOUND BY THE RIGHT PERSON. CHOSEN FOR THE RIGHT REASON.</h2>
         </div>
         <div class="system-story__closing-action editorial-reveal">
-          <p data-config="systemClosingCopy">Start with the foundation. Build the meaning. Earn the trust. Then measure what the complete system makes possible.</p>
-          <a href="#services" data-config-href="systemClosingHref"><span data-config="systemClosingLabel">EXPLORE THE WORK</span><i data-lucide="arrow-up-right" aria-hidden="true"></i></a>
+          <p data-config="systemClosingCopy">A useful search journey moves from recognition to understanding, from understanding to confidence, and from confidence to an action the business can measure.</p>
+          <a href="contact.html" data-config-href="systemClosingHref"><span data-config="systemClosingLabel">MAP YOUR SEARCH JOURNEY</span><i data-lucide="arrow-up-right" aria-hidden="true"></i></a>
         </div>
       </footer>
     </section>
@@ -543,6 +599,15 @@
           <div class="about-section__lead editorial-reveal">
             <p data-config="aboutLead">ORBIT is an independent SEO consultancy for businesses that want a clearer, more durable way to grow through search.</p>
             <p data-config="aboutCopy">We work at the point where technical structure, useful content and earned authority meet. Every recommendation has a reason, an owner and a measurable signal behind it.</p>
+            <aside class="about-principal">
+              <span data-config="aboutPrincipalEyebrow">ENGAGEMENT MODEL</span>
+              <h3 data-config="aboutPrincipalTitle">SENIOR ATTENTION. NO DELIVERY THEATRE.</h3>
+              <p data-config="aboutPrincipalCopy">The person responsible for the diagnosis stays close to implementation and review. Context is not lost between a sales call, a strategy deck and the people doing the work.</p>
+            </aside>
+            <article class="principal-profile" hidden data-config-visible="principalName">
+              <figure><img alt="" width="640" height="800" loading="lazy" data-config-src="principalImage" data-config-alt="principalImageAlt"></figure>
+              <div><span data-config="principalRole"></span><h3 data-config="principalName"></h3><p data-config="principalBio"></p></div>
+            </article>
           </div>
 
           <dl class="about-principles editorial-reveal">
@@ -652,7 +717,10 @@
         <p data-config="footerExploreLabel">EXPLORE</p>
         <a href="#work" data-config-href="navWorkHref" data-config="navWorkLabel">THE WORK</a>
         <a href="#services" data-config-href="navServicesHref" data-config="navServicesLabel">SERVICES</a>
+        <a href="#proof" data-config-href="navProofHref" data-config="navProofLabel">EVIDENCE</a>
+        <a href="#engagement" data-config-href="navEngagementHref" data-config="navEngagementLabel">WAYS TO WORK</a>
         <a href="#process" data-config-href="navMethodHref" data-config="navMethodLabel">90 DAYS</a>
+        <a href="#insights" data-config-href="navInsightsHref" data-config="navInsightsLabel">INSIGHTS</a>
         <a href="#faq" data-config-href="navFaqHref" data-config="navFaqLabel">FAQ</a>
         <a href="#about" data-config-href="navAboutHref" data-config="navAboutLabel">ABOUT</a>
         <a href="contact.html" data-config-href="navContactHref" data-config="navContactLabel">CONTACT</a>
@@ -694,10 +762,24 @@
       <nav class="orbit-nav__links" aria-label="Performance navigation">
         <a href="#top" data-config-href="navDiscoverHref"><b data-config="navDiscoverLabel">OPENING</b></a>
         <a href="#work" data-config-href="navWorkHref"><b data-config="navWorkLabel">THE WORK</b></a>
-        <a href="#services" data-config-href="navServicesHref"><b data-config="navServicesLabel">SERVICES</b></a>
+        <div class="orbit-nav__group orbit-nav__group--services" id="services-nav-group">
+          <a href="#services" data-config-href="navServicesHref"><b data-config="navServicesLabel">SERVICES</b></a>
+          <button class="orbit-nav__dropdown-toggle" id="services-nav-toggle" type="button" aria-expanded="false" aria-controls="services-nav-menu" aria-label="Show service pages">
+            <i data-lucide="chevron-down" aria-hidden="true"></i>
+          </button>
+          <div class="orbit-nav__submenu" id="services-nav-menu" aria-hidden="true" inert>
+            <span data-config="navServicesMenuLabel">SELECT A SERVICE</span>
+            <a href="audit-technical-seo.html" data-config-href="auditPageHref"><small>01</small><b data-config="footerAuditLabel">AUDIT &amp; TECHNICAL SEO</b></a>
+            <a href="content-strategy.html" data-config-href="contentPageHref"><small>02</small><b data-config="footerContentLabel">CONTENT STRATEGY</b></a>
+            <a href="authority-growth.html" data-config-href="authorityPageHref"><small>03</small><b data-config="footerAuthorityLabel">AUTHORITY &amp; GROWTH</b></a>
+          </div>
+        </div>
+        <a href="#proof" data-config-href="navProofHref"><b data-config="navProofLabel">EVIDENCE</b></a>
+        <a href="#engagement" data-config-href="navEngagementHref"><b data-config="navEngagementLabel">WAYS TO WORK</b></a>
         <a href="#process" data-config-href="navMethodHref"><b data-config="navMethodLabel">90 DAYS</b></a>
+        <a href="#insights" data-config-href="navInsightsHref"><b data-config="navInsightsLabel">INSIGHTS</b></a>
         <a href="#faq" data-config-href="navFaqHref"><b data-config="navFaqLabel">FAQ</b></a>
-        <a href="#about" data-config-href="navAboutHref"><b data-config="navAboutLabel">ABOUT</b></a>
+        <a href="#about" data-active-from="#system" data-config-href="navAboutHref"><b data-config="navAboutLabel">ABOUT</b></a>
         <a href="contact.html" data-config-href="navContactHref"><b data-config="navContactLabel">CONTACT</b></a>
       </nav>
       <span class="orbit-nav__status" data-config="navStatus">SEARCH SYSTEMS / 2026</span>
@@ -721,8 +803,9 @@
   <noscript>
     <style>.headline,.site-header,.hero__copy,.scroll-cue{opacity:1!important;clip-path:none!important}</style>
   </noscript>
-  <script src="https://unpkg.com/lucide@1.17.0/dist/umd/lucide.min.js"></script>
-  <script src="config.js"></script>
+  <script src="assets/js/lucide.min.js"></script>
+  <script src="config/config.js"></script>
   <script src="main.js"></script>
+  <script src="cookie-consent.js"></script>
 </body>
 </html>

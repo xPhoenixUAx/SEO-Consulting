@@ -1,0 +1,4 @@
+DirectoryIndex index.html
+Options -MultiViews
+
+ErrorDocument 404 /404.html

@@ -26,10 +26,43 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
     respond(405, false, 'Method not allowed.');
 }
 
-$config = require __DIR__ . '/form-config.php';
-$recipient = filter_var($config['recipient_email'] ?? '', FILTER_VALIDATE_EMAIL);
-$sender = filter_var($config['sender_email'] ?? '', FILTER_VALIDATE_EMAIL);
-$siteName = trim((string) ($config['site_name'] ?? 'Website'));
+$contentLength = (int) ($_SERVER['CONTENT_LENGTH'] ?? 0);
+if ($contentLength > 16384) {
+    respond(413, false, 'The request is too large.');
+}
+
+$origin = trim((string) ($_SERVER['HTTP_ORIGIN'] ?? ''));
+$requestHost = strtolower(preg_replace('/:\d+$/', '', (string) ($_SERVER['HTTP_HOST'] ?? '')) ?? '');
+if ($origin !== '') {
+    $originHost = strtolower((string) parse_url($origin, PHP_URL_HOST));
+    if ($originHost === '' || $requestHost === '' || $originHost !== $requestHost) {
+        respond(403, false, 'The request origin is not allowed.');
+    }
+}
+
+$configPath = __DIR__ . '/config/config.js';
+$configSource = is_file($configPath) ? file_get_contents($configPath) : false;
+
+if (
+    $configSource === false
+    || preg_match(
+        '/\/\* CONFIG_START:.*?\*\/\s*window\.SITE_CONFIG\s*=\s*Object\.freeze\(\s*(\{.*?\})\s*\);\s*\/\* CONFIG_END \*\//s',
+        $configSource,
+        $configMatch
+    ) !== 1
+) {
+    respond(500, false, 'The contact form configuration could not be loaded.');
+}
+
+try {
+    $config = json_decode($configMatch[1], true, 512, JSON_THROW_ON_ERROR);
+} catch (JsonException) {
+    respond(500, false, 'The contact form configuration is invalid.');
+}
+
+$recipient = filter_var(strtolower((string) ($config['corporateEmail'] ?? '')), FILTER_VALIDATE_EMAIL);
+$sender = filter_var((string) ($config['senderEmail'] ?? ''), FILTER_VALIDATE_EMAIL);
+$siteName = trim((string) ($config['companyName'] ?? $config['brandName'] ?? 'Website'));
 
 if ($recipient === false || $sender === false) {
     respond(500, false, 'The contact form is not configured correctly.');
@@ -58,12 +91,9 @@ if (textLength($company) > 180) {
     respond(422, false, 'The company name is too long.');
 }
 
-$allowedInterests = [
-    'seo-consulting' => 'SEO consulting',
-    'advertising' => 'Advertising',
-    'collaboration' => 'Collaboration',
-    'other' => 'Other',
-];
+$allowedInterests = is_array($config['formInterestValues'] ?? null)
+    ? $config['formInterestValues']
+    : [];
 
 if (!array_key_exists($interest, $allowedInterests)) {
     respond(422, false, 'Please select what you are interested in.');
@@ -106,8 +136,8 @@ $headers = implode("\r\n", [
     'X-Mailer: PHP/' . phpversion(),
 ]);
 
-if (!mail($recipient, $encodedSubject, $body, $headers)) {
+if (!@mail($recipient, $encodedSubject, $body, $headers)) {
     respond(500, false, 'The message could not be delivered. Please try again later.');
 }
 
-respond(200, true, 'Thank you! We have successfully received your request. Our team will review your information and get back to you shortly.');
+respond(200, true, (string) ($config['contactFormSuccess'] ?? 'Thank you! We have successfully received your request. Our team will review your information and get back to you shortly.'));

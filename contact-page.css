@@ -644,7 +644,68 @@
     margin-top: 14px;
   }
 
-  .contact-footer > div a {
+.contact-footer > div a {
     margin-top: 15px;
   }
+}
+
+.contact-response {
+  padding: clamp(100px, 11vw, 170px) clamp(24px, 5.2vw, 80px);
+  background: var(--paper);
+  color: var(--black);
+}
+
+.contact-response__header {
+  display: grid;
+  grid-template-columns: .44fr 1fr;
+  gap: clamp(34px, 7vw, 110px);
+  align-items: end;
+  margin-bottom: clamp(70px, 8vw, 120px);
+}
+
+.contact-response__header > p { margin: 0; color: #718500; font-size: 10px; letter-spacing: .17em; }
+.contact-response__header h2 { margin: 0; max-width: 12ch; font-family: "Archivo", Arial, sans-serif; font-size: clamp(56px, 7.8vw, 118px); font-weight: 850; line-height: .82; letter-spacing: -.07em; }
+.contact-response__steps { display: grid; grid-template-columns: repeat(3, 1fr); margin: 0; padding: 0; border-top: 1px solid rgba(5,5,4,.35); list-style: none; }
+.contact-response__steps li { padding: 40px clamp(24px, 3.2vw, 50px) 10px 0; }
+.contact-response__steps li + li { padding-left: clamp(24px, 3.2vw, 50px); border-left: 1px solid rgba(5,5,4,.3); }
+.contact-response__steps span { color: #718500; font-size: 10px; letter-spacing: .14em; }
+.contact-response__steps h3 { margin: 52px 0 22px; font-family: "Archivo", Arial, sans-serif; font-size: clamp(28px, 2.7vw, 42px); line-height: .96; letter-spacing: -.05em; }
+.contact-response__steps p { margin: 0; font-size: 15px; line-height: 1.68; }
+
+.contact-guide__intro,
+.contact-guide__points dd,
+.contact-inquiry__context > p,
+.contact-inquiry__context > div p { font-size: clamp(14px, 1.15vw, 17px); line-height: 1.68; }
+.contact-footer { font-size: 10px; }
+html,
+body { overflow-x: clip; }
+
+@media (max-width: 820px) {
+  .contact-response { padding: 94px 18px; }
+  .contact-response__header { display: block; margin-bottom: 62px; }
+  .contact-response__header > p { margin-bottom: 28px; font-size: 9px; }
+  .contact-response__header h2 { font-size: clamp(49px, 15vw, 66px); }
+  .contact-response__steps { display: block; }
+  .contact-response__steps li,
+  .contact-response__steps li + li { padding: 34px 0; border-left: 0; border-bottom: 1px solid rgba(5,5,4,.3); }
+  .contact-response__steps span { font-size: 9px; }
+  .contact-response__steps h3 { margin: 30px 0 18px; font-size: 32px; }
+  .contact-response__steps p,
+  .contact-guide__intro,
+  .contact-guide__points dd,
+  .contact-inquiry__context > p,
+  .contact-inquiry__context > div p { font-size: 15px; }
+  .contact-footer { font-size: 9px; }
+}
+
+/* Keep editorial contact headlines condensed, but never visually concatenate words. */
+.contact-hero h1,
+.contact-guide__header h2,
+.contact-inquiry__header h2,
+.contact-response__header h2 {
+  word-spacing: .18em;
+}
+
+.contact-response__steps h3 {
+  word-spacing: .14em;
 }
