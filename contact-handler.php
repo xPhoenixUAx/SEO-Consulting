@@ -21,6 +21,13 @@ function textLength(string $value): int
     return function_exists('mb_strlen') ? mb_strlen($value, 'UTF-8') : strlen($value);
 }
 
+function encodeHeaderPhrase(string $value): string
+{
+    return preg_match('/[^\x20-\x7E]/', $value) === 1
+        ? '=?UTF-8?B?' . base64_encode($value) . '?='
+        : $value;
+}
+
 if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
     header('Allow: POST');
     respond(405, false, 'Method not allowed.');
@@ -109,8 +116,9 @@ $cleanHeader = static function (string $value): string {
 
 $name = $cleanHeader($name);
 $company = $cleanHeader($company);
+$siteName = $cleanHeader($siteName);
 $message = str_replace(["\r\n", "\r", "\0"], ["\n", "\n", ''], strip_tags($message));
-$interestLabel = $allowedInterests[$interest];
+$interestLabel = trim(strip_tags((string) $allowedInterests[$interest]));
 $submittedAt = gmdate('Y-m-d H:i:s') . ' UTC';
 
 $subject = sprintf('%s enquiry from %s', $siteName, $name);
@@ -131,8 +139,8 @@ $body = implode("\n", [
 $headers = implode("\r\n", [
     'MIME-Version: 1.0',
     'Content-Type: text/plain; charset=UTF-8',
-    sprintf('From: %s website <%s>', $siteName, $sender),
-    sprintf('Reply-To: %s <%s>', $name, $email),
+    sprintf('From: %s <%s>', encodeHeaderPhrase($siteName . ' website'), $sender),
+    sprintf('Reply-To: %s <%s>', encodeHeaderPhrase($name), $email),
     'X-Mailer: PHP/' . phpversion(),
 ]);
 

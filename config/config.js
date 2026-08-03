@@ -241,20 +241,6 @@ window.SITE_CONFIG = Object.freeze(
   "systemFoundationEyebrow": "THE MOMENT OF PROOF",
   "systemFoundationTitle": "ANSWER THE QUESTION BEFORE ASKING FOR THE CONVERSION.",
   "systemFoundationNote": "QUERY / ANSWER / EVIDENCE / ACTION",
-  "systemContentEyebrow": "CONTENT WITH A JOB TO DO",
-  "systemContentTitle": "TURN QUESTIONS INTO A BODY OF KNOWLEDGE.",
-  "systemContentCopy": "Search demand becomes valuable only when it is shaped into pages that answer real needs, express genuine expertise and lead naturally toward a useful next step.",
-  "systemContentSignalOne": "Every page owns a distinct search intent.",
-  "systemContentSignalTwo": "Related ideas strengthen one another.",
-  "systemContentSignalThree": "Publishing follows priority, not volume.",
-  "systemStatement": "A GOOD SEARCH STRATEGY LEAVES THE WEBSITE MORE COHERENT THAN IT FOUND IT.",
-  "systemStatementNote": "NOT MORE COMPLEX. MORE UNDERSTANDABLE.",
-  "systemAuthorityEyebrow": "AUTHORITY THAT HAS CONTEXT",
-  "systemAuthorityTitle": "EARN RECOGNITION THAT MEANS SOMETHING.",
-  "systemAuthorityCopy": "Trust accumulates when useful work is recognized in the right places and the site consistently demonstrates depth around the subjects it intends to own.",
-  "systemAuthoritySignalOne": "References come from relevant environments.",
-  "systemAuthoritySignalTwo": "Expertise is connected, not fragmented.",
-  "systemAuthoritySignalThree": "Growth is judged by business value.",
   "systemClosingEyebrow": "THE COMPLETE JOURNEY",
   "systemClosingTitle": "FOUND BY THE RIGHT PERSON. CHOSEN FOR THE RIGHT REASON.",
   "systemClosingCopy": "A useful search journey moves from recognition to understanding, from understanding to confidence, and from confidence to an action the business can measure.",
@@ -378,6 +364,9 @@ window.SITE_CONFIG = Object.freeze(
 
 ;(function (config) {
   "use strict";
+  if (typeof config.siteLanguage === "string" && config.siteLanguage.trim()) {
+    document.documentElement.lang = config.siteLanguage.trim();
+  }
   var file = location.pathname.split("/").pop() || "index.html";
   var page = config.seoPages && config.seoPages[file];
   if (!page && document.body && document.body.classList.contains("not-found-page")) {
