@@ -108,6 +108,8 @@
   let servicesDropdownOpen = false;
   let logoDocked = false;
   let heroNavigationAvailable = true;
+  let navigationScrollLocked = false;
+  let navigationScrollY = 0;
   const orbitLogoTarget = { x: window.innerWidth * 0.5, y: window.innerHeight * 0.5 };
 
   const pointer = {
@@ -982,13 +984,49 @@
     heroNavToggle.setAttribute("aria-label", next ? "Close navigation" : "Open navigation");
     orbitNavPanel.setAttribute("aria-hidden", String(!next));
     orbitNavPanel.inert = !next;
+    if (next) orbitNavPanel.scrollTop = 0;
     orbitNavHint.textContent = next ? "CLOSE / NAVIGATION" : "OPEN / NAVIGATION";
     body.classList.toggle("nav-open", next);
+    setNavigationScrollLock(next);
     if (!next) setServicesDropdownOpen(false);
+
+    if (next && width <= 820 && rafId) {
+      cancelAnimationFrame(rafId);
+      rafId = 0;
+    } else if (!next) {
+      requestRender();
+    }
 
     if (!next && restoreFocus) {
       const focusTarget = logoDocked ? orbitNavToggle : heroNavToggle;
       if (document.activeElement !== focusTarget) focusTarget.focus({ preventScroll: true });
+    }
+  }
+
+  function setNavigationScrollLock(locked) {
+    const shouldLock = Boolean(locked && width <= 820);
+    if (shouldLock && !navigationScrollLocked) {
+      navigationScrollY = window.scrollY;
+      body.style.position = "fixed";
+      body.style.top = `${-navigationScrollY}px`;
+      body.style.right = "0";
+      body.style.left = "0";
+      body.style.width = "100%";
+      navigationScrollLocked = true;
+      return;
+    }
+    if (!shouldLock && navigationScrollLocked) {
+      body.style.removeProperty("position");
+      body.style.removeProperty("top");
+      body.style.removeProperty("right");
+      body.style.removeProperty("left");
+      body.style.removeProperty("width");
+      const previousScrollBehavior = document.documentElement.style.scrollBehavior;
+      document.documentElement.style.scrollBehavior = "auto";
+      window.scrollTo(0, navigationScrollY);
+      document.documentElement.style.scrollBehavior = previousScrollBehavior;
+      navigationScrollLocked = false;
+      updateScrollTarget();
     }
   }
 
@@ -1017,7 +1055,8 @@
     }
 
     if (event.key !== "Tab" || width > 820) return;
-    const focusable = [orbitNavToggle, ...orbitNavLinks];
+    const focusable = [orbitNavToggle, ...orbitNavPanel.querySelectorAll("a[href], button:not(:disabled)")]
+      .filter((element) => !element.closest("[inert]") && getComputedStyle(element).visibility !== "hidden");
     const first = focusable[0];
     const last = focusable[focusable.length - 1];
     if (event.shiftKey && document.activeElement === first) {
@@ -1794,6 +1833,7 @@
   function render(now) {
     rafId = 0;
     if (!pageVisible) return;
+    if (navigationOpen && width <= 820) return;
     if (!startTime) startTime = now;
     if (now - lastFrame < 12) {
       rafId = requestAnimationFrame(render);

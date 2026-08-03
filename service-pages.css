@@ -1593,8 +1593,8 @@ button:disabled,
 
 .unified-header__submenu a {
   display: grid;
-  grid-template-columns: 24px minmax(0, 1fr);
-  gap: 12px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
   align-items: center;
   padding: 9px 0;
   border-top: 1px solid rgba(5,5,4,.12);
@@ -1712,22 +1712,52 @@ button:disabled,
     right: 0;
     left: 0;
     display: block;
+    height: 100vh;
+    height: 100dvh;
+    padding: 0 18px max(24px, env(safe-area-inset-bottom));
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+    clip-path: none;
+    opacity: 0;
+    visibility: hidden;
+    transform: translate3d(-16px, 0, 0);
+    transition: opacity 180ms ease, transform 280ms cubic-bezier(.16,1,.3,1), visibility 0s linear 280ms;
+    will-change: opacity, transform;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(5,5,4,.26) transparent;
+  }
+
+  .unified-header__panel::before {
+    content: "";
+    position: sticky;
+    z-index: 2;
+    top: 0;
+    display: block;
     height: 64px;
-    padding: 0;
-    clip-path: inset(0 100% 0 0);
-    transition: height 360ms cubic-bezier(.76,0,.24,1), clip-path 360ms cubic-bezier(.76,0,.24,1) 360ms;
+    margin: 0 -18px -64px;
+    background: linear-gradient(var(--paper) 0 76%, rgba(240,237,228,.94) 88%, rgba(240,237,228,0));
+    pointer-events: none;
   }
 
   .unified-header.is-open .unified-header__panel,
   .unified-header.is-open .unified-header__panel.has-services-open {
-    height: 100svh;
-    overflow: hidden;
-    clip-path: inset(0);
-    transition: clip-path 360ms cubic-bezier(.76,0,.24,1), height 480ms cubic-bezier(.76,0,.24,1) 330ms;
+    height: 100vh;
+    height: 100dvh;
+    overflow-x: hidden;
+    overflow-y: auto;
+    clip-path: none;
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    transition: opacity 180ms ease, transform 280ms cubic-bezier(.16,1,.3,1), visibility 0s;
   }
 
   .unified-header__brand {
     position: absolute;
+    z-index: 3;
     top: 21px;
     left: 72px;
   }
@@ -1741,12 +1771,16 @@ button:disabled,
   }
 
   .unified-header__links {
-    position: absolute;
-    top: 20%;
-    left: 18px;
+    position: relative;
+    top: auto;
+    left: auto;
     display: grid;
-    justify-content: start;
-    gap: 22px;
+    grid-template-columns: minmax(0, 1fr);
+    justify-content: stretch;
+    justify-items: start;
+    gap: 18px;
+    width: 100%;
+    margin: 100px 0 30px;
   }
 
   .unified-header__links > a,
@@ -1770,7 +1804,8 @@ button:disabled,
     display: grid;
     grid-template-columns: minmax(0, 1fr) 38px;
     gap: 0;
-    width: calc(100vw - 36px);
+    justify-self: stretch;
+    width: 100%;
   }
 
   .unified-header__dropdown-toggle {
@@ -1815,23 +1850,47 @@ button:disabled,
   }
 
   .unified-header__submenu a {
-    grid-template-columns: 20px minmax(0, 1fr);
-    gap: 9px;
-    padding: 6px 0;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    min-height: 34px;
+    padding: 8px 0;
     font-size: 12px;
     line-height: 1.1;
   }
 
+  .unified-header__submenu a b {
+    display: block;
+    width: 100%;
+  }
+
   .unified-header__panel.has-services-open .unified-header__links {
-    top: 12%;
-    gap: 12px;
+    top: auto;
+    gap: 14px;
   }
 
   .unified-header__status {
-    position: absolute;
-    right: 18px;
-    bottom: 21px;
+    position: static;
+    display: block;
+    margin: 28px 0 0 auto;
+    padding-top: 18px;
+    border-top: 1px solid rgba(5,5,4,.16);
     font-size: 6px;
+    text-align: right;
+  }
+
+  .unified-header.is-open .unified-header__brand,
+  .unified-header.is-open .unified-header__links > a,
+  .unified-header.is-open .unified-header__group > a,
+  .unified-header.is-open .unified-header__status,
+  .unified-header.is-open .unified-header__dropdown-toggle {
+    transition-delay: 0s !important;
+  }
+
+  .unified-header.is-open .unified-header__brand,
+  .unified-header.is-open .unified-header__links > a,
+  .unified-header.is-open .unified-header__group > a,
+  .unified-header.is-open .unified-header__status {
+    transition-delay: 0s !important;
   }
 
   .unified-header__trace {

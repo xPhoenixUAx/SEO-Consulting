@@ -50,9 +50,9 @@
         <button class="unified-header__dropdown-toggle" id="unified-services-toggle" type="button" aria-expanded="false" aria-controls="unified-services-menu" aria-label="Show service pages"><i data-lucide="chevron-down" aria-hidden="true"></i></button>
         <div class="unified-header__submenu" id="unified-services-menu" aria-hidden="true" inert>
           <span>${escapeHtml(config.navServicesMenuLabel || "SELECT A SERVICE")}</span>
-          <a href="${escapeHtml(config.auditPageHref || "audit-technical-seo.html")}" data-page="audit-technical-seo.html"><small>01</small><b>${escapeHtml(config.footerAuditLabel || "AUDIT & TECHNICAL SEO")}</b></a>
-          <a href="${escapeHtml(config.contentPageHref || "content-strategy.html")}" data-page="content-strategy.html"><small>02</small><b>${escapeHtml(config.footerContentLabel || "CONTENT STRATEGY")}</b></a>
-          <a href="${escapeHtml(config.authorityPageHref || "authority-growth.html")}" data-page="authority-growth.html"><small>03</small><b>${escapeHtml(config.footerAuthorityLabel || "AUTHORITY & GROWTH")}</b></a>
+          <a href="${escapeHtml(config.auditPageHref || "audit-technical-seo.html")}" data-page="audit-technical-seo.html"><b>${escapeHtml(config.footerAuditLabel || "AUDIT & TECHNICAL SEO")}</b></a>
+          <a href="${escapeHtml(config.contentPageHref || "content-strategy.html")}" data-page="content-strategy.html"><b>${escapeHtml(config.footerContentLabel || "CONTENT STRATEGY")}</b></a>
+          <a href="${escapeHtml(config.authorityPageHref || "authority-growth.html")}" data-page="authority-growth.html"><b>${escapeHtml(config.footerAuthorityLabel || "AUTHORITY & GROWTH")}</b></a>
         </div>
       </div>`;
     }).join("");
@@ -209,6 +209,8 @@
     const currentFile = location.pathname.split("/").pop() || "index.html";
     let navigationOpen = false;
     let servicesOpen = false;
+    let navigationScrollLocked = false;
+    let navigationScrollY = 0;
 
     const serviceMainLink = header.querySelector('[data-main-nav="navServicesLabel"]');
     const contactMainLink = header.querySelector('[data-main-nav="navContactLabel"]');
@@ -244,9 +246,37 @@
       trigger.setAttribute("aria-label", navigationOpen ? "Close navigation" : "Open navigation");
       panel.setAttribute("aria-hidden", String(!navigationOpen));
       panel.inert = !navigationOpen;
+      if (navigationOpen) panel.scrollTop = 0;
       body.classList.toggle("unified-nav-open", navigationOpen);
+      setNavigationScrollLock(navigationOpen);
       if (!navigationOpen) setServicesOpen(false);
       if (!navigationOpen && restoreFocus) trigger.focus({ preventScroll: true });
+    }
+
+    function setNavigationScrollLock(locked) {
+      const shouldLock = Boolean(locked && innerWidth <= 820);
+      if (shouldLock && !navigationScrollLocked) {
+        navigationScrollY = window.scrollY;
+        body.style.position = "fixed";
+        body.style.top = `${-navigationScrollY}px`;
+        body.style.right = "0";
+        body.style.left = "0";
+        body.style.width = "100%";
+        navigationScrollLocked = true;
+        return;
+      }
+      if (!shouldLock && navigationScrollLocked) {
+        body.style.removeProperty("position");
+        body.style.removeProperty("top");
+        body.style.removeProperty("right");
+        body.style.removeProperty("left");
+        body.style.removeProperty("width");
+        const previousScrollBehavior = document.documentElement.style.scrollBehavior;
+        document.documentElement.style.scrollBehavior = "auto";
+        window.scrollTo(0, navigationScrollY);
+        document.documentElement.style.scrollBehavior = previousScrollBehavior;
+        navigationScrollLocked = false;
+      }
     }
 
     trigger.addEventListener("click", () => setNavigationOpen(!navigationOpen));
