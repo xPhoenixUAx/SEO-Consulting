@@ -9,18 +9,18 @@
   const ambientCanvas = document.getElementById("ambient-field");
   const canvas = document.getElementById("particle-field");
   const staticFieldCanvas = document.createElement("canvas");
-  const ambientContext = ambientCanvas.getContext("2d", { alpha: true });
-  const context = canvas.getContext("2d", { alpha: true });
+  const ambientContext = ambientCanvas.getContext("2d", { alpha: true, desynchronized: true });
+  const context = canvas.getContext("2d", { alpha: true, desynchronized: true });
   const sceneTwo = document.getElementById("scene-two");
   const semanticStage = document.getElementById("semantic-stage");
   const semanticCanvas = document.getElementById("semantic-field");
-  const semanticContext = semanticCanvas.getContext("2d", { alpha: true });
+  const semanticContext = semanticCanvas.getContext("2d", { alpha: true, desynchronized: true });
   const semanticLens = document.getElementById("semantic-lens");
   const semanticTerms = Array.from(document.querySelectorAll(".semantic-terms span"));
   const sceneThree = document.getElementById("scene-three");
   const orbitStage = document.getElementById("orbit-stage");
   const orbitCanvas = document.getElementById("orbit-field");
-  const orbitContext = orbitCanvas.getContext("2d", { alpha: true });
+  const orbitContext = orbitCanvas.getContext("2d", { alpha: true, desynchronized: true });
   const orbitLetter = document.querySelector(".orbit-title__letter");
   const orbitTail = document.querySelector(".orbit-title__tail");
   const siteHeader = document.querySelector(".site-header");
@@ -37,7 +37,7 @@
   const sceneFour = document.getElementById("work");
   const workStage = document.getElementById("work-stage");
   const workCanvas = document.getElementById("work-field");
-  const workContext = workCanvas.getContext("2d", { alpha: true });
+  const workContext = workCanvas.getContext("2d", { alpha: true, desynchronized: true });
   const workChapters = Array.from(document.querySelectorAll("[data-work-step]"));
   const servicesSection = document.getElementById("services");
   const serviceCtaSection = document.querySelector(".service-cta");
@@ -57,31 +57,31 @@
   const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
   const qualityProfiles = {
     high: {
-      density: 1,
-      staticDensity: 1,
-      desktopDpr: 1.32,
-      mobileDpr: 1.15,
+      density: 0.72,
+      staticDensity: 0.94,
+      desktopDpr: 1.16,
+      mobileDpr: 1.08,
       canvasInterval: 12,
-      ambientInterval: 22,
-      scrollingCanvasInterval: 42
+      ambientInterval: 24,
+      scrollingCanvasInterval: 12
     },
     balanced: {
-      density: 0.64,
-      staticDensity: 0.68,
-      desktopDpr: 1.12,
-      mobileDpr: 1.05,
-      canvasInterval: 23,
-      ambientInterval: 30,
-      scrollingCanvasInterval: 56
+      density: 0.4,
+      staticDensity: 0.72,
+      desktopDpr: 1,
+      mobileDpr: 1,
+      canvasInterval: 12,
+      ambientInterval: 32,
+      scrollingCanvasInterval: 12
     },
     low: {
-      density: 0.48,
-      staticDensity: 0.52,
+      density: 0.32,
+      staticDensity: 0.58,
       desktopDpr: 1,
       mobileDpr: 1,
       canvasInterval: 32,
-      ambientInterval: 46,
-      scrollingCanvasInterval: 72
+      ambientInterval: 42,
+      scrollingCanvasInterval: 30
     }
   };
   const qualityOrder = ["high", "balanced", "low"];
@@ -132,6 +132,8 @@
   let performanceFrameCount = 0;
   let performanceLongFrames = 0;
   let qualityChangePending = false;
+  let layoutMetrics = null;
+  let orbitLetterMetrics = null;
   let targetScroll = 0;
   let smoothScroll = 0;
   let targetSceneScroll = 0;
@@ -162,7 +164,11 @@
   let heroNavigationAvailable = true;
   let navigationScrollLocked = false;
   let navigationScrollY = 0;
+  let wheelScrollTarget = window.scrollY;
+  let wheelScrollTimer = 0;
+  let wheelScrollActive = false;
   const orbitLogoTarget = { x: window.innerWidth * 0.5, y: window.innerHeight * 0.5 };
+  const motionPropertyValues = new Map();
 
   const pointer = {
     x: window.innerWidth * 0.72,
@@ -174,6 +180,41 @@
     active: false,
     lastMove: 0
   };
+
+  function setMotionProperty(name, value) {
+    if (motionPropertyValues.get(name) === value) return;
+    motionPropertyValues.set(name, value);
+    root.style.setProperty(name, value);
+  }
+
+  function getLogoParts() {
+    const raw = String(config.logoMark || "OR/BIT").trim();
+    const separator = raw.indexOf("/");
+    const top = (separator >= 0 ? raw.slice(0, separator) : raw).trim() || "OR";
+    const bottom = (separator >= 0 ? raw.slice(separator + 1) : "BIT").trim() || "BIT";
+    return { top, bottom };
+  }
+
+  function applyLogoMarks() {
+    const { top, bottom } = getLogoParts();
+    document.querySelectorAll(".brand-mark").forEach((mark) => {
+      const topRow = mark.querySelector(".brand-mark__row--top");
+      const bottomRow = mark.querySelector(".brand-mark__row--bottom");
+      if (!topRow || !bottomRow) return;
+
+      if (mark.classList.contains("brand-mark--morph")) {
+        const origin = topRow.querySelector(".brand-mark__origin");
+        const detail = topRow.querySelector(".brand-mark__detail");
+        if (origin && detail) {
+          origin.textContent = top.slice(0, 1);
+          detail.textContent = `${top.slice(1)}/`;
+        }
+      } else {
+        topRow.textContent = `${top}/`;
+      }
+      bottomRow.textContent = bottom;
+    });
+  }
 
   function applyConfig() {
     document.querySelectorAll("[data-config]").forEach((element) => {
@@ -224,6 +265,8 @@
       const value = config[element.dataset.configVisible];
       element.hidden = !(typeof value === "string" && value.trim());
     });
+
+    applyLogoMarks();
 
     workChapters.forEach((chapter) => {
       const title = chapter.querySelector("h3");
@@ -329,18 +372,23 @@
     const nextQuality = qualityOrder[qualityOrder.indexOf(motionQuality) + 1];
     if (!nextQuality) return;
 
+    const previousDensity = qualityProfile.density;
     motionQuality = nextQuality;
     qualityProfile = qualityProfiles[motionQuality];
     root.dataset.motionQuality = motionQuality;
     qualityChangePending = true;
     resetPerformanceWindow();
-
-    setTimeout(() => {
-      resize();
-      lastCanvasFrame = 0;
-      qualityChangePending = false;
-      requestRender();
-    }, 0);
+    const reduction = Math.min(1, qualityProfile.density / previousDensity);
+    const trim = (items) => items.slice(0, Math.max(1, Math.ceil(items.length * reduction)));
+    particles = trim(particles);
+    swarm = trim(swarm);
+    fragments = trim(fragments);
+    semanticParticles = trim(semanticParticles);
+    orbitParticles = trim(orbitParticles);
+    workParticles = trim(workParticles);
+    lastCanvasFrame = 0;
+    qualityChangePending = false;
+    requestRender();
   }
 
   function monitorRuntimePerformance(now, frameDelta, animatedSceneVisible) {
@@ -380,7 +428,7 @@
     const isMobile = width < 700;
     const targetCount = reducedMotion.matches
       ? Math.min(130, edgePoints.length)
-      : Math.min(edgePoints.length, scaledHeroCount(isMobile ? 300 : 680, isMobile ? 150 : 280));
+      : Math.min(edgePoints.length, scaledHeroCount(isMobile ? 260 : 620, isMobile ? 105 : 190));
 
     particles = new Array(targetCount);
     for (let index = 0; index < targetCount; index += 1) {
@@ -416,7 +464,7 @@
 
     const swarmCount = reducedMotion.matches
       ? isMobile ? 280 : 520
-      : scaledHeroCount(isMobile ? 310 : 520, isMobile ? 160 : 240);
+      : scaledHeroCount(isMobile ? 260 : 460, isMobile ? 110 : 160);
     swarm = new Array(swarmCount);
     for (let index = 0; index < swarmCount; index += 1) {
       const familyRoll = random();
@@ -442,7 +490,7 @@
 
     const fragmentCount = reducedMotion.matches
       ? 24
-      : scaledHeroCount(isMobile ? 42 : 72, isMobile ? 24 : 34);
+      : scaledHeroCount(isMobile ? 28 : 44, isMobile ? 12 : 16);
     fragments = new Array(fragmentCount);
     for (let index = 0; index < fragmentCount; index += 1) {
       const label = random() > 0.6 ? words[Math.floor(random() * words.length)] : String.fromCharCode(97 + Math.floor(random() * 26));
@@ -518,7 +566,7 @@
     const isMobile = width < 700;
     const count = reducedMotion.matches
       ? isMobile ? 150 : 230
-      : scaledParticleCount(isMobile ? 520 : 1080, isMobile ? 250 : 420);
+      : scaledParticleCount(isMobile ? 380 : 650, isMobile ? 140 : 170);
 
     semanticParticles = new Array(count);
     for (let index = 0; index < count; index += 1) {
@@ -554,7 +602,7 @@
     const isMobile = width < 700;
     const count = reducedMotion.matches
       ? isMobile ? 210 : 320
-      : scaledParticleCount(isMobile ? 640 : 1320, isMobile ? 310 : 520);
+      : scaledParticleCount(isMobile ? 470 : 820, isMobile ? 180 : 240);
     const sourceX = width * (isMobile ? 0.95 : 0.92);
     const sourceY = height * (isMobile ? 0.35 : 0.45);
 
@@ -585,7 +633,9 @@
         accent: random() > 0.91,
         glyph: random() > 0.958 ? words[Math.floor(random() * words.length)] : "",
         phaseOffset: (random() - 0.5) * 0.22,
-        bandSpeed: band.speed * band.direction
+        bandSpeed: band.speed * band.direction,
+        launchAngle: Math.atan2(originY - sourceY, originX - sourceX),
+        launchDistance: Math.hypot(originX - sourceX, originY - sourceY)
       };
     }
   }
@@ -596,7 +646,7 @@
     const isMobile = width < 700;
     const count = reducedMotion.matches
       ? isMobile ? 90 : 140
-      : scaledParticleCount(isMobile ? 260 : 520, isMobile ? 130 : 220);
+      : scaledParticleCount(isMobile ? 220 : 420, isMobile ? 90 : 160);
 
     workParticles = new Array(count);
     for (let index = 0; index < count; index += 1) {
@@ -657,19 +707,49 @@
     buildSemanticField();
     buildOrbitField();
     buildWorkField();
+    cacheLayoutMetrics();
     lastAmbientFrame = 0;
     updateScrollTarget();
   }
 
+  function cacheLayoutMetrics() {
+    const read = (element) => {
+      if (!element) return null;
+      const rect = element.getBoundingClientRect();
+      return { top: rect.top + window.scrollY, height: rect.height };
+    };
+
+    layoutMetrics = {
+      hero: read(heroTrack),
+      sceneTwo: read(sceneTwo),
+      sceneThree: read(sceneThree),
+      sceneFour: read(sceneFour),
+      services: read(servicesSection),
+      serviceCta: read(serviceCtaSection),
+      method: read(methodSection),
+      story: read(storySection),
+      closing: read(storyClosingSection),
+      storyLight: storyLightSections.map(read).filter(Boolean)
+    };
+    orbitLetterMetrics = null;
+  }
+
+  function viewportMetric(metric) {
+    if (!metric) return null;
+    const top = metric.top - window.scrollY;
+    return { top, bottom: top + metric.height, height: metric.height };
+  }
+
   function updateScrollTarget() {
     if (!heroTrack) return;
-    const rect = heroTrack.getBoundingClientRect();
+    if (!layoutMetrics) cacheLayoutMetrics();
+    const rect = viewportMetric(layoutMetrics.hero);
     const travel = Math.max(1, rect.height - height);
     targetScroll = clamp(-rect.top / travel, 0, 1);
     heroVisible = rect.bottom > 0 && rect.top < height;
 
     if (sceneTwo) {
-      const sceneRect = sceneTwo.getBoundingClientRect();
+      const sceneRect = viewportMetric(layoutMetrics.sceneTwo);
       const sceneTravel = Math.max(1, sceneRect.height - height);
       targetSceneScroll = clamp(-sceneRect.top / sceneTravel, 0, 1);
       targetSceneEntry = clamp(1 - sceneRect.top / height, 0, 1);
@@ -677,7 +757,7 @@
     }
 
     if (sceneThree) {
-      const orbitRect = sceneThree.getBoundingClientRect();
+      const orbitRect = viewportMetric(layoutMetrics.sceneThree);
       const orbitTravel = Math.max(1, orbitRect.height - height);
       targetOrbitScroll = clamp(-orbitRect.top / orbitTravel, 0, 1);
       targetOrbitEntry = clamp(1 - orbitRect.top / height, 0, 1);
@@ -685,16 +765,16 @@
     }
 
     if (sceneFour) {
-      const workRect = sceneFour.getBoundingClientRect();
+      const workRect = viewportMetric(layoutMetrics.sceneFour);
       const workTravel = Math.max(1, workRect.height - height);
       targetWorkScroll = clamp(-workRect.top / workTravel, 0, 1);
       targetWorkEntry = clamp(1 - workRect.top / height, 0, 1);
       workVisible = workRect.top < height && workRect.bottom > 0;
     }
 
-    const servicesRect = servicesSection ? servicesSection.getBoundingClientRect() : null;
-    const serviceCtaRect = serviceCtaSection ? serviceCtaSection.getBoundingClientRect() : null;
-    const methodRect = methodSection ? methodSection.getBoundingClientRect() : null;
+    const servicesRect = viewportMetric(layoutMetrics.services);
+    const serviceCtaRect = viewportMetric(layoutMetrics.serviceCta);
+    const methodRect = viewportMetric(layoutMetrics.method);
     editorialLightVisible = Boolean(
       (servicesRect && servicesRect.top < height && servicesRect.bottom > 0)
       || (methodRect && methodRect.top < height && methodRect.bottom > 0)
@@ -705,15 +785,15 @@
       && serviceCtaRect.bottom > height * 0.3
     );
 
-    const storyRect = storySection ? storySection.getBoundingClientRect() : null;
+    const storyRect = viewportMetric(layoutMetrics.story);
     storyVisible = Boolean(storyRect && storyRect.top < height && storyRect.bottom > 0);
-    storyLightVisible = storyLightSections.some((section) => {
-      const rect = section.getBoundingClientRect();
+    storyLightVisible = layoutMetrics.storyLight.some((metric) => {
+      const rect = viewportMetric(metric);
       const sampleY = height * .12;
       return rect.top <= sampleY && rect.bottom > sampleY;
     });
     if (storyClosingSection) {
-      const closingRect = storyClosingSection.getBoundingClientRect();
+      const closingRect = viewportMetric(layoutMetrics.closing);
       const sampleY = height * .12;
       storyAcidVisible = closingRect.top <= sampleY && closingRect.bottom > sampleY;
     }
@@ -748,35 +828,37 @@
     });
   }
 
-  function updateDocumentMotion() {
+  function updateDocumentMotion(frameDelta = 16.67) {
+    const frameScale = clamp(frameDelta / 16.67, 0.5, 2.5);
+    const motionEase = (strength) => 1 - Math.pow(1 - strength, frameScale);
     smoothScroll = reducedMotion.matches
       ? targetScroll
-      : smoothScroll + (targetScroll - smoothScroll) * 0.085;
+      : smoothScroll + (targetScroll - smoothScroll) * motionEase(0.14);
     smoothSceneScroll = reducedMotion.matches
       ? targetSceneScroll
-      : smoothSceneScroll + (targetSceneScroll - smoothSceneScroll) * 0.075;
+      : smoothSceneScroll + (targetSceneScroll - smoothSceneScroll) * motionEase(0.13);
     smoothSceneEntry = reducedMotion.matches
       ? targetSceneEntry
-      : smoothSceneEntry + (targetSceneEntry - smoothSceneEntry) * 0.09;
+      : smoothSceneEntry + (targetSceneEntry - smoothSceneEntry) * motionEase(0.16);
     smoothOrbitScroll = reducedMotion.matches
       ? targetOrbitScroll
-      : smoothOrbitScroll + (targetOrbitScroll - smoothOrbitScroll) * 0.072;
+      : smoothOrbitScroll + (targetOrbitScroll - smoothOrbitScroll) * motionEase(0.12);
     smoothOrbitEntry = reducedMotion.matches
       ? targetOrbitEntry
-      : smoothOrbitEntry + (targetOrbitEntry - smoothOrbitEntry) * 0.085;
+      : smoothOrbitEntry + (targetOrbitEntry - smoothOrbitEntry) * motionEase(0.15);
     smoothWorkScroll = reducedMotion.matches
       ? targetWorkScroll
-      : smoothWorkScroll + (targetWorkScroll - smoothWorkScroll) * 0.07;
+      : smoothWorkScroll + (targetWorkScroll - smoothWorkScroll) * motionEase(0.12);
     smoothWorkEntry = reducedMotion.matches
       ? targetWorkEntry
-      : smoothWorkEntry + (targetWorkEntry - smoothWorkEntry) * 0.085;
-    root.style.setProperty("--scroll", smoothScroll.toFixed(4));
-    root.style.setProperty("--headline-y", `${(-smoothScroll * 24).toFixed(3)}vh`);
-    root.style.setProperty("--headline-scale", (1 - smoothScroll * 0.045).toFixed(4));
-    root.style.setProperty("--headline-opacity", clamp(1 - smoothScroll * 0.94, 0, 1).toFixed(4));
-    root.style.setProperty("--atmosphere-opacity", clamp(1 - smoothScroll, 0, 1).toFixed(4));
-    root.style.setProperty("--header-y", `${(-smoothScroll * 18).toFixed(2)}px`);
-    root.style.setProperty("--header-opacity", clamp(1 - smoothScroll * 1.18, 0, 1).toFixed(4));
+      : smoothWorkEntry + (targetWorkEntry - smoothWorkEntry) * motionEase(0.15);
+    setMotionProperty("--scroll", smoothScroll.toFixed(4));
+    setMotionProperty("--headline-y", `${(-smoothScroll * 24).toFixed(3)}vh`);
+    setMotionProperty("--headline-scale", (1 - smoothScroll * 0.045).toFixed(4));
+    setMotionProperty("--headline-opacity", clamp(1 - smoothScroll * 0.94, 0, 1).toFixed(4));
+    setMotionProperty("--atmosphere-opacity", clamp(1 - smoothScroll, 0, 1).toFixed(4));
+    setMotionProperty("--header-y", `${(-smoothScroll * 18).toFixed(2)}px`);
+    setMotionProperty("--header-opacity", clamp(1 - smoothScroll * 1.18, 0, 1).toFixed(4));
     heroNavigationAvailable = heroVisible && targetScroll < 0.82;
     siteHeader.classList.toggle("is-nav-available", heroNavigationAvailable);
     heroNavToggle.tabIndex = heroNavigationAvailable ? 0 : -1;
@@ -793,18 +875,17 @@
     const copyOpacity = reducedMotion.matches ? 1 : smoothstep(0.5, 0.75, sceneProgress);
     const metaOpacity = 0.18 + smoothstep(0.18, 0.84, smoothSceneEntry) * 0.68;
 
-    root.style.setProperty("--scene-progress", sceneProgress.toFixed(4));
-    root.style.setProperty("--scene-title-y", `${((1 - titleReveal) * 42).toFixed(2)}px`);
-    root.style.setProperty("--scene-copy-opacity", copyOpacity.toFixed(4));
-    root.style.setProperty("--scene-copy-y", `${((1 - copyOpacity) * 16).toFixed(2)}px`);
-    root.style.setProperty("--scene-meta-opacity", metaOpacity.toFixed(4));
-    root.style.setProperty("--scan-one-clip", `${((1 - scanOne) * 101).toFixed(3)}%`);
-    root.style.setProperty("--scan-two-clip", `${((1 - scanTwo) * 101).toFixed(3)}%`);
-    root.style.setProperty("--scan-x", `${(-6 + scanTravel * 112).toFixed(3)}%`);
-    root.style.setProperty("--scan-opacity", scanOpacity.toFixed(4));
+    setMotionProperty("--scene-progress", sceneProgress.toFixed(4));
+    setMotionProperty("--scene-title-y", `${((1 - titleReveal) * 42).toFixed(2)}px`);
+    setMotionProperty("--scene-copy-opacity", copyOpacity.toFixed(4));
+    setMotionProperty("--scene-copy-y", `${((1 - copyOpacity) * 16).toFixed(2)}px`);
+    setMotionProperty("--scene-meta-opacity", metaOpacity.toFixed(4));
+    setMotionProperty("--scan-one-clip", `${((1 - scanOne) * 101).toFixed(3)}%`);
+    setMotionProperty("--scan-two-clip", `${((1 - scanTwo) * 101).toFixed(3)}%`);
+    setMotionProperty("--scan-x", `${(-6 + scanTravel * 112).toFixed(3)}%`);
+    setMotionProperty("--scan-opacity", scanOpacity.toFixed(4));
 
-    const stageRect = semanticStage ? semanticStage.getBoundingClientRect() : null;
-    const stagePinned = stageRect && stageRect.top <= 1 && stageRect.bottom >= height - 1;
+    const stagePinned = sceneVisible && targetSceneScroll > 0.002 && targetSceneScroll < 0.998;
     const orbitStillLight = orbitVisible && smoothOrbitScroll < 0.12;
     const lightSceneActive = (sceneVisible && smoothSceneEntry > 0.42 && !orbitVisible)
       || orbitStillLight
@@ -813,21 +894,23 @@
     const lensActive = lightSceneActive && stagePinned && pointer.active && finePointer.matches && !reducedMotion.matches;
     body.classList.toggle("is-light-scene", lightSceneActive);
     body.classList.toggle("is-acid-scene", storyAcidVisible);
-    root.style.setProperty("--lens-opacity", lensActive ? "1" : "0");
+    setMotionProperty("--lens-opacity", lensActive ? "1" : "0");
 
     if (semanticLens && lensActive) {
       semanticLens.style.left = `${pointer.tx}px`;
       semanticLens.style.top = `${pointer.ty}px`;
     }
 
-    const termTime = reducedMotion.matches ? 0 : performance.now() * 0.001;
-    semanticTerms.forEach((term, index) => {
-      const delay = Number(term.dataset.delay || 0);
-      const reveal = reducedMotion.matches ? 1 : smoothstep(0.19 + delay, 0.38 + delay, sceneProgress);
-      const drift = reducedMotion.matches ? 0 : Math.sin(termTime * 0.37 + index * 1.17) * 2.4;
-      term.style.opacity = (reveal * (0.46 + (index % 3) * 0.13)).toFixed(3);
-      term.style.transform = `translate3d(${((1 - reveal) * (index % 2 ? 28 : -28)).toFixed(2)}px, ${((1 - reveal) * 18 + drift).toFixed(2)}px, 0)`;
-    });
+    if (sceneVisible || Math.abs(targetSceneScroll - smoothSceneScroll) > 0.001) {
+      const termTime = reducedMotion.matches ? 0 : performance.now() * 0.001;
+      semanticTerms.forEach((term, index) => {
+        const delay = Number(term.dataset.delay || 0);
+        const reveal = reducedMotion.matches ? 1 : smoothstep(0.19 + delay, 0.38 + delay, sceneProgress);
+        const drift = reducedMotion.matches ? 0 : Math.sin(termTime * 0.37 + index * 1.17) * 2.4;
+        term.style.opacity = (reveal * (0.46 + (index % 3) * 0.13)).toFixed(3);
+        term.style.transform = `translate3d(${((1 - reveal) * (index % 2 ? 28 : -28)).toFixed(2)}px, ${((1 - reveal) * 18 + drift).toFixed(2)}px, 0)`;
+      });
+    }
 
     const orbitProgress = reducedMotion.matches ? 1 : mapOrbitProgress(smoothOrbitScroll);
     const darkReveal = reducedMotion.matches ? 1 : smoothstep(0.045, 0.275, orbitProgress);
@@ -855,39 +938,48 @@
     const logoDetailProgress = reducedMotion.matches ? 1 : smoothstep(0.89, 0.965, orbitProgress);
     const orbitSettle = reducedMotion.matches ? performanceExit : 1 - smoothstep(0.78, 0.95, orbitProgress);
 
-    root.style.setProperty("--eclipse-scale", eclipseScale.toFixed(4));
-    root.style.setProperty("--orbit-dark-opacity", darkReveal.toFixed(4));
-    root.style.setProperty("--orbit-title-opacity", orbitTitleReveal.toFixed(4));
-    root.style.setProperty("--orbit-title-y", `${((1 - orbitTitleReveal) * 36).toFixed(2)}px`);
-    root.style.setProperty("--orbit-be-clip", `${((1 - orbitBeReveal) * 101).toFixed(3)}%`);
-    root.style.setProperty("--orbit-word-clip", `${((1 - orbitWordReveal) * 101).toFixed(3)}%`);
-    root.style.setProperty("--orbit-meta-opacity", (orbitMetaReveal * 0.88 * performanceExit).toFixed(4));
-    root.style.setProperty("--orbit-copy-opacity", (orbitCopyReveal * performanceExit).toFixed(4));
-    root.style.setProperty("--orbit-copy-y", `${((1 - orbitCopyReveal) * 18).toFixed(2)}px`);
-    root.style.setProperty("--orbit-crescent-opacity", (orbitCrescentIn * orbitSettle).toFixed(4));
-    root.style.setProperty("--orbit-crescent-rotation", `${(-17 + orbitProgress * 12).toFixed(2)}deg`);
-    root.style.setProperty("--orbit-be-exit-opacity", beExitOpacity.toFixed(4));
-    root.style.setProperty("--orbit-tail-opacity", tailExit.toFixed(4));
-    root.style.setProperty("--orbit-tail-x", `${((1 - tailExit) * (width < 700 ? 42 : 96)).toFixed(2)}px`);
-    root.style.setProperty("--orbit-o-opacity", oExit.toFixed(4));
-    root.style.setProperty("--logo-detail-opacity", logoDetailProgress.toFixed(4));
-    root.style.setProperty("--logo-detail-x", `${((1 - logoDetailProgress) * 7).toFixed(2)}px`);
-    root.style.setProperty("--logo-o-scale", mix(2.2, 1, logoDetailProgress).toFixed(4));
-    root.style.setProperty("--logo-o-x", `${mix(7, 0, logoDetailProgress).toFixed(2)}px`);
-    root.style.setProperty("--logo-o-y", `${mix(3, 0, logoDetailProgress).toFixed(2)}px`);
+    setMotionProperty("--eclipse-scale", eclipseScale.toFixed(4));
+    setMotionProperty("--orbit-dark-opacity", darkReveal.toFixed(4));
+    setMotionProperty("--orbit-title-opacity", orbitTitleReveal.toFixed(4));
+    setMotionProperty("--orbit-title-y", `${((1 - orbitTitleReveal) * 36).toFixed(2)}px`);
+    setMotionProperty("--orbit-be-clip", `${((1 - orbitBeReveal) * 101).toFixed(3)}%`);
+    setMotionProperty("--orbit-word-clip", `${((1 - orbitWordReveal) * 101).toFixed(3)}%`);
+    setMotionProperty("--orbit-meta-opacity", (orbitMetaReveal * 0.88 * performanceExit).toFixed(4));
+    setMotionProperty("--orbit-copy-opacity", (orbitCopyReveal * performanceExit).toFixed(4));
+    setMotionProperty("--orbit-copy-y", `${((1 - orbitCopyReveal) * 18).toFixed(2)}px`);
+    setMotionProperty("--orbit-crescent-opacity", (orbitCrescentIn * orbitSettle).toFixed(4));
+    setMotionProperty("--orbit-crescent-rotation", `${(-17 + orbitProgress * 12).toFixed(2)}deg`);
+    setMotionProperty("--orbit-be-exit-opacity", beExitOpacity.toFixed(4));
+    setMotionProperty("--orbit-tail-opacity", tailExit.toFixed(4));
+    setMotionProperty("--orbit-tail-x", `${((1 - tailExit) * (width < 700 ? 42 : 96)).toFixed(2)}px`);
+    setMotionProperty("--orbit-o-opacity", oExit.toFixed(4));
+    setMotionProperty("--logo-detail-opacity", logoDetailProgress.toFixed(4));
+    setMotionProperty("--logo-detail-x", `${((1 - logoDetailProgress) * 7).toFixed(2)}px`);
+    setMotionProperty("--logo-o-scale", mix(2.2, 1, logoDetailProgress).toFixed(4));
+    setMotionProperty("--logo-o-x", `${mix(7, 0, logoDetailProgress).toFixed(2)}px`);
+    setMotionProperty("--logo-o-y", `${mix(3, 0, logoDetailProgress).toFixed(2)}px`);
 
     const mobileNavigation = width <= 820;
     const triggerSize = mobileNavigation ? 40 : 44;
     const dockCenterX = mobileNavigation ? 36 : 55;
     const dockCenterY = mobileNavigation ? 36 : 48;
-    const letterRect = orbitLetter ? orbitLetter.getBoundingClientRect() : null;
-    const letterCenterX = letterRect ? letterRect.left + letterRect.width * 0.5 : width * 0.39;
-    const letterCenterY = letterRect ? letterRect.top + letterRect.height * 0.48 : height * 0.5;
+    if (!orbitLetterMetrics && orbitVisible && orbitLetter && orbitStage) {
+      const stageRect = orbitStage.getBoundingClientRect();
+      const letterRect = orbitLetter.getBoundingClientRect();
+      orbitLetterMetrics = {
+        centerX: letterRect.left - stageRect.left + letterRect.width * 0.5,
+        centerY: letterRect.top - stageRect.top + letterRect.height * 0.48,
+        width: letterRect.width,
+        height: letterRect.height
+      };
+    }
+    const letterCenterX = orbitLetterMetrics ? orbitLetterMetrics.centerX : width * 0.39;
+    const letterCenterY = orbitLetterMetrics ? orbitLetterMetrics.centerY : height * 0.5;
     const dockEase = logoDockProgress * logoDockProgress * (3 - 2 * logoDockProgress);
     const logoCenterX = mix(letterCenterX, dockCenterX, dockEase);
     const logoCenterY = mix(letterCenterY, dockCenterY, dockEase) - Math.sin(Math.PI * dockEase) * height * 0.085;
-    const startScaleX = letterRect ? Math.max(1, letterRect.width / triggerSize) : 3.2;
-    const startScaleY = letterRect ? Math.max(1, letterRect.height * 0.82 / triggerSize) : 4.1;
+    const startScaleX = orbitLetterMetrics ? Math.max(1, orbitLetterMetrics.width / triggerSize) : 3.2;
+    const startScaleY = orbitLetterMetrics ? Math.max(1, orbitLetterMetrics.height * 0.82 / triggerSize) : 4.1;
     const logoScaleX = mix(startScaleX, 1, dockEase);
     const logoScaleY = mix(startScaleY, 1, dockEase);
 
@@ -895,11 +987,11 @@
     orbitLogoTarget.y = logoCenterY;
     const performancePassed = targetOrbitScroll >= 0.91;
     const logoOpacity = orbitVisible ? logoMorph : performancePassed ? 1 : 0;
-    root.style.setProperty("--logo-opacity", logoOpacity.toFixed(4));
-    root.style.setProperty("--logo-tx", `${(logoCenterX - dockCenterX).toFixed(2)}px`);
-    root.style.setProperty("--logo-ty", `${(logoCenterY - dockCenterY).toFixed(2)}px`);
-    root.style.setProperty("--logo-scale-x", logoScaleX.toFixed(4));
-    root.style.setProperty("--logo-scale-y", logoScaleY.toFixed(4));
+    setMotionProperty("--logo-opacity", logoOpacity.toFixed(4));
+    setMotionProperty("--logo-tx", `${(logoCenterX - dockCenterX).toFixed(2)}px`);
+    setMotionProperty("--logo-ty", `${(logoCenterY - dockCenterY).toFixed(2)}px`);
+    setMotionProperty("--logo-scale-x", logoScaleX.toFixed(4));
+    setMotionProperty("--logo-scale-y", logoScaleY.toFixed(4));
 
     logoDocked = targetOrbitScroll >= (reducedMotion.matches ? 0.95 : 0.985);
     orbitNavigation.classList.toggle("is-docked", logoDocked);
@@ -919,28 +1011,30 @@
     const chapterPosition = clamp((workProgress - 0.235) / 0.61 * 4, 0, 3.999);
     const activeWorkStep = clamp(Math.floor(chapterPosition), 0, 3);
 
-    root.style.setProperty("--work-intro-opacity", workIntroOpacity.toFixed(4));
-    root.style.setProperty("--work-intro-y", `${(-workIntroOut * 30).toFixed(2)}px`);
-    root.style.setProperty("--work-system-opacity", workSystemOpacity.toFixed(4));
-    root.style.setProperty("--work-system-y", `${((1 - workSystemIn) * 36 - workSystemOut * 24).toFixed(2)}px`);
-    root.style.setProperty("--work-verdict-opacity", verdictOpacity.toFixed(4));
-    root.style.setProperty("--work-verdict-y", `${((1 - verdictOpacity) * 32).toFixed(2)}px`);
-    root.style.setProperty("--work-chapters-opacity", (1 - smoothstep(0.82, 0.9, workProgress)).toFixed(4));
+    setMotionProperty("--work-intro-opacity", workIntroOpacity.toFixed(4));
+    setMotionProperty("--work-intro-y", `${(-workIntroOut * 30).toFixed(2)}px`);
+    setMotionProperty("--work-system-opacity", workSystemOpacity.toFixed(4));
+    setMotionProperty("--work-system-y", `${((1 - workSystemIn) * 36 - workSystemOut * 24).toFixed(2)}px`);
+    setMotionProperty("--work-verdict-opacity", verdictOpacity.toFixed(4));
+    setMotionProperty("--work-verdict-y", `${((1 - verdictOpacity) * 32).toFixed(2)}px`);
+    setMotionProperty("--work-chapters-opacity", (1 - smoothstep(0.82, 0.9, workProgress)).toFixed(4));
 
-    workChapters.forEach((chapter, index) => {
-      const localPhase = chapterPosition - activeWorkStep;
-      let opacity = 0;
-      if (index === activeWorkStep) {
-        opacity = activeWorkStep === 3 ? 1 : 1 - smoothstep(0.76, 0.985, localPhase);
-      } else if (index === activeWorkStep + 1) {
-        opacity = smoothstep(0.76, 0.985, localPhase);
-      }
-      if (reducedMotion.matches) opacity = index === activeWorkStep ? 1 : 0;
-      const direction = index > activeWorkStep ? 1 : -1;
-      chapter.style.setProperty("--chapter-opacity", opacity.toFixed(4));
-      chapter.style.setProperty("--chapter-y", `${(direction * (1 - opacity) * 30).toFixed(2)}px`);
-      chapter.style.setProperty("--chapter-copy-opacity", smoothstep(0.64, 0.9, opacity).toFixed(4));
-    });
+    if (workVisible || Math.abs(targetWorkScroll - smoothWorkScroll) > 0.001) {
+      workChapters.forEach((chapter, index) => {
+        const localPhase = chapterPosition - activeWorkStep;
+        let opacity = 0;
+        if (index === activeWorkStep) {
+          opacity = activeWorkStep === 3 ? 1 : 1 - smoothstep(0.76, 0.985, localPhase);
+        } else if (index === activeWorkStep + 1) {
+          opacity = smoothstep(0.76, 0.985, localPhase);
+        }
+        if (reducedMotion.matches) opacity = index === activeWorkStep ? 1 : 0;
+        const direction = index > activeWorkStep ? 1 : -1;
+        chapter.style.setProperty("--chapter-opacity", opacity.toFixed(4));
+        chapter.style.setProperty("--chapter-y", `${(direction * (1 - opacity) * 30).toFixed(2)}px`);
+        chapter.style.setProperty("--chapter-copy-opacity", smoothstep(0.64, 0.9, opacity).toFixed(4));
+      });
+    }
 
     body.classList.toggle("is-work-scene", workVisible);
 
@@ -1197,6 +1291,7 @@
   }
 
   function onNavigationPointerDown(event) {
+    if (wheelScrollActive) stopWheelScroll(true);
     if (navigationOpen && !orbitNavigation.contains(event.target)) {
       setNavigationOpen(false, false);
     }
@@ -1205,8 +1300,10 @@
   function drawFragments(seconds, scroll) {
     ambientContext.save();
     ambientContext.textBaseline = "middle";
+    ambientContext.font = `${width < 700 ? 8 : 10}px "IBM Plex Mono", monospace`;
     const centerX = width * 0.7;
     const centerY = height * 0.52;
+    const pointerEnabled = pointer.active && finePointer.matches && !reducedMotion.matches;
     for (let index = 0; index < fragments.length; index += 1) {
       const fragment = fragments[index];
       const appeared = smoothstep(fragment.delay, fragment.delay + 1.5, seconds);
@@ -1219,12 +1316,16 @@
       const sine = Math.sin(turn);
       const x = centerX + dx * cosine - dy * sine + Math.cos(seconds * fragment.speed * 0.72 + fragment.phase) * 10 + scroll * fragment.speed * 54;
       const y = centerY + dx * sine + dy * cosine + Math.sin(seconds * fragment.speed + fragment.phase) * 7 - scroll * height * (0.34 + fragment.speed * 0.2);
-      const pointerDistance = Math.hypot(pointer.x - x, pointer.y - y);
-      const field = smoothstep(175, 0, pointerDistance);
+      let field = 0;
+      if (pointerEnabled) {
+        const pointerDx = pointer.x - x;
+        const pointerDy = pointer.y - y;
+        const pointerDistanceSquared = pointerDx * pointerDx + pointerDy * pointerDy;
+        if (pointerDistanceSquared < 30625) field = smoothstep(175, 0, Math.sqrt(pointerDistanceSquared));
+      }
       const alpha = fragment.alpha * appeared * depthFade * (0.82 + field * 0.42) * (0.65 + fragment.depth * 0.55);
       if (alpha <= 0.002) continue;
 
-      ambientContext.font = `${fragment.size}px "IBM Plex Mono", monospace`;
       ambientContext.fillStyle = fragment.accent && (field > 0.08 || index % 7 === 0)
         ? `rgba(216,255,0,${Math.min(0.72, alpha * 1.32)})`
         : `rgba(240,237,228,${alpha})`;
@@ -1332,6 +1433,23 @@
         staticContext.stroke();
       }
     }
+
+    staticContext.globalCompositeOperation = "source-over";
+    staticContext.textBaseline = "middle";
+    staticContext.font = `${isMobile ? 8 : 10}px "IBM Plex Mono", monospace`;
+    const labelCount = isMobile ? 20 : 42;
+    for (let index = 0; index < labelCount; index += 1) {
+      const accent = random() > 0.84;
+      const alpha = 0.12 + random() * 0.27;
+      staticContext.fillStyle = accent
+        ? `rgba(216,255,0,${Math.min(0.48, alpha * 1.16)})`
+        : `rgba(240,237,228,${alpha})`;
+      staticContext.fillText(
+        random() > 0.44 ? words[Math.floor(random() * words.length)] : String.fromCharCode(97 + Math.floor(random() * 26)),
+        width * (0.04 + random() * 0.92),
+        height * (0.07 + random() * 0.86)
+      );
+    }
   }
 
   function drawStaticField(seconds, scroll) {
@@ -1353,6 +1471,9 @@
     const time = Math.max(0, seconds - 0.65);
     const centerX = width * (width < 700 ? 0.72 : 0.69);
     const centerY = height * (width < 700 ? 0.43 : 0.51);
+    const pointerEnabled = pointer.active && finePointer.matches && !reducedMotion.matches;
+    const pointerRadius = width < 700 ? 92 : 160;
+    const pointerRadiusSquared = pointerRadius * pointerRadius;
 
     ambientContext.save();
     ambientContext.globalCompositeOperation = "lighter";
@@ -1406,12 +1527,17 @@
         routeFade = 0.52;
       }
 
-      const pointerDx = x - pointer.x;
-      const pointerDy = y - pointer.y;
-      const pointerDistance = Math.hypot(pointerDx, pointerDy) || 1;
-      const pointerField = reducedMotion.matches ? 0 : smoothstep(width < 700 ? 92 : 160, 8, pointerDistance);
-      x += (pointerDx / pointerDistance) * pointerField * (2.5 + particle.depth * 5.5);
-      y += (pointerDy / pointerDistance) * pointerField * (2.5 + particle.depth * 5.5);
+      if (pointerEnabled) {
+        const pointerDx = x - pointer.x;
+        const pointerDy = y - pointer.y;
+        const pointerDistanceSquared = pointerDx * pointerDx + pointerDy * pointerDy;
+        if (pointerDistanceSquared < pointerRadiusSquared) {
+          const pointerDistance = Math.sqrt(pointerDistanceSquared) || 1;
+          const pointerField = smoothstep(pointerRadius, 8, pointerDistance);
+          x += (pointerDx / pointerDistance) * pointerField * (2.5 + particle.depth * 5.5);
+          y += (pointerDy / pointerDistance) * pointerField * (2.5 + particle.depth * 5.5);
+        }
+      }
 
       if (scroll > 0) {
         x += (x - centerX) * scroll * particle.depth * 0.56;
@@ -1474,8 +1600,8 @@
 
     for (let strand = 0; strand < strands; strand += 1) {
       const spread = strand - (strands - 1) * 0.5;
-      let previousX = 0;
-      let previousY = 0;
+      const acid = strand === Math.floor(strands * 0.68);
+      ambientContext.beginPath();
 
       for (let sample = 0; sample <= samples; sample += 1) {
         const u = sample / samples;
@@ -1491,27 +1617,17 @@
         const x = inverse * inverse * inverse * p0x + 3 * inverse * inverse * u * p1x + 3 * inverse * u * u * p2x + u * u * u * p3x;
         const y = inverse * inverse * inverse * p0y + 3 * inverse * inverse * u * p1y + 3 * inverse * u * u * p2y + u * u * u * p3y
           + Math.sin(u * 19 + seconds * 0.33 + strand * 0.71) * (0.6 + strand * 0.08);
-
-        if (sample > 0) {
-          const pulse = 0.2 + 0.8 * Math.pow(Math.max(0, Math.sin(u * 12.5 - seconds * 0.78 + strand)), 3);
-          const centerFade = Math.sin(Math.PI * u);
-          const alpha = intensity * centerFade * pulse * (strand === Math.floor(strands * 0.68) ? 0.14 : 0.082);
-          if (alpha > 0.002) {
-            ambientContext.beginPath();
-            ambientContext.moveTo(previousX, previousY);
-            ambientContext.lineTo(x, y);
-            const acid = strand === Math.floor(strands * 0.68) && u > 0.55 && u < 0.76;
-            ambientContext.strokeStyle = acid
-              ? `rgba(216,255,0,${alpha * 1.42})`
-              : `rgba(240,237,228,${alpha * 1.58})`;
-            ambientContext.lineWidth = acid ? 0.76 : 0.38 + strand * 0.018;
-            ambientContext.stroke();
-          }
-        }
-
-        previousX = x;
-        previousY = y;
+        if (sample === 0) ambientContext.moveTo(x, y);
+        else ambientContext.lineTo(x, y);
       }
+
+      const pulse = 0.52 + Math.max(0, Math.sin(seconds * 0.78 - strand * 0.74)) * 0.48;
+      const alpha = intensity * pulse * (acid ? 0.13 : 0.075);
+      ambientContext.strokeStyle = acid
+        ? `rgba(216,255,0,${alpha * 1.42})`
+        : `rgba(240,237,228,${alpha * 1.58})`;
+      ambientContext.lineWidth = acid ? 0.76 : 0.38 + strand * 0.018;
+      ambientContext.stroke();
     }
 
     ambientContext.restore();
@@ -1527,6 +1643,11 @@
     const rest = smoothstep(8.4, 10.4, seconds);
     const loopCurrent = rest * (0.1 + (Math.sin((seconds - 10.4) * 0.52) + 1) * 0.045);
     const cursorRadius = width < 700 ? 105 : 168;
+    const cursorRadiusSquared = cursorRadius * cursorRadius;
+    const pointerEnabled = pointer.active && finePointer.matches && motionAllowed;
+    const pointerVelocity = pointerEnabled
+      ? Math.min(1, Math.hypot(pointer.x - pointer.px, pointer.y - pointer.py) / 16)
+      : 0;
     const centerX = width * 0.58;
     const centerY = height * 0.5;
 
@@ -1550,16 +1671,19 @@
         targetY += Math.cos(seconds * 0.28 + particle.phase) * (particle.stream ? 5.5 : 2.5) * rest;
       }
 
-      const pointerDx = targetX - pointer.x;
-      const pointerDy = targetY - pointer.y;
-      const pointerDistance = Math.hypot(pointerDx, pointerDy) || 1;
-      const field = smoothstep(cursorRadius, 12, pointerDistance);
-      const pointerVelocity = Math.min(1, Math.hypot(pointer.x - pointer.px, pointer.y - pointer.py) / 16);
-      const fieldStrength = motionAllowed
-        ? field * (4.5 + pointerVelocity * 5.5) * particle.depth
-        : 0;
-      targetX += (pointerDx / pointerDistance) * fieldStrength;
-      targetY += (pointerDy / pointerDistance) * fieldStrength;
+      let field = 0;
+      if (pointerEnabled) {
+        const pointerDx = targetX - pointer.x;
+        const pointerDy = targetY - pointer.y;
+        const pointerDistanceSquared = pointerDx * pointerDx + pointerDy * pointerDy;
+        if (pointerDistanceSquared < cursorRadiusSquared) {
+          const pointerDistance = Math.sqrt(pointerDistanceSquared) || 1;
+          field = smoothstep(cursorRadius, 12, pointerDistance);
+          const fieldStrength = field * (4.5 + pointerVelocity * 5.5) * particle.depth;
+          targetX += (pointerDx / pointerDistance) * fieldStrength;
+          targetY += (pointerDy / pointerDistance) * fieldStrength;
+        }
+      }
 
       if (scroll > 0) {
         const depth = scroll * (0.42 + particle.depth * 0.85);
@@ -1593,12 +1717,17 @@
         context.stroke();
       }
 
-      context.beginPath();
-      context.arc(particle.x, particle.y, Math.max(0.25, radius), 0, Math.PI * 2);
       context.fillStyle = acid
         ? `rgba(216,255,0,${Math.min(0.88, alpha * 1.35)})`
         : `rgba(240,237,228,${alpha})`;
-      context.fill();
+      if (particle.stream || acid) {
+        context.beginPath();
+        context.arc(particle.x, particle.y, Math.max(0.25, radius), 0, Math.PI * 2);
+        context.fill();
+      } else {
+        const size = Math.max(0.5, radius * 1.7);
+        context.fillRect(particle.x - size * 0.5, particle.y - size * 0.5, size, size);
+      }
     }
 
     context.restore();
@@ -1643,9 +1772,8 @@
 
     const assemble = reducedMotion.matches ? 1 : smoothstep(0.06, 0.58, progress);
     const meaning = reducedMotion.matches ? 0.35 : smoothstep(0.69, 0.96, progress);
-    const stageRect = semanticStage.getBoundingClientRect();
-    const localPointerX = pointer.x - stageRect.left;
-    const localPointerY = pointer.y - stageRect.top;
+    const localPointerX = pointer.x;
+    const localPointerY = pointer.y;
     const lensEnabled = body.classList.contains("is-light-scene") && pointer.active && finePointer.matches && !reducedMotion.matches;
     const clusters = width < 700
       ? [[width * 0.24, height * 0.28], [width * 0.72, height * 0.42], [width * 0.57, height * 0.7]]
@@ -1677,12 +1805,17 @@
         targetY = mix(targetY, clusterY, meaning * 0.78);
       }
 
-      const pointerDx = targetX - localPointerX;
-      const pointerDy = targetY - localPointerY;
-      const pointerDistance = Math.hypot(pointerDx, pointerDy) || 1;
-      const lensField = lensEnabled ? smoothstep(170, 12, pointerDistance) : 0;
-      targetX = mix(targetX, particle.tx, lensField * 0.22);
-      targetY = mix(targetY, particle.ty, lensField * 0.22);
+      let lensField = 0;
+      if (lensEnabled) {
+        const pointerDx = targetX - localPointerX;
+        const pointerDy = targetY - localPointerY;
+        const pointerDistanceSquared = pointerDx * pointerDx + pointerDy * pointerDy;
+        if (pointerDistanceSquared < 28900) {
+          lensField = smoothstep(170, 12, Math.sqrt(pointerDistanceSquared));
+          targetX = mix(targetX, particle.tx, lensField * 0.22);
+          targetY = mix(targetY, particle.ty, lensField * 0.22);
+        }
+      }
 
       particle.px = particle.x;
       particle.py = particle.y;
@@ -1734,11 +1867,10 @@
     const visibility = reducedMotion.matches ? 1 : smoothstep(0.09, 0.32, progress);
     if (visibility < 0.002) return;
 
-    const orbitRect = orbitStage.getBoundingClientRect();
-    const stagePinned = orbitRect.top <= 1 && orbitRect.bottom >= height - 1;
+    const stagePinned = targetOrbitScroll > 0.002 && targetOrbitScroll < 0.998;
     const pointerEnabled = stagePinned && pointer.active && finePointer.matches && !reducedMotion.matches;
-    const localPointerX = pointer.x - orbitRect.left;
-    const localPointerY = pointer.y - orbitRect.top;
+    const localPointerX = pointer.x;
+    const localPointerY = pointer.y;
     const centerPull = pointerEnabled ? 0.014 : 0;
     const centerX = width * 0.5 + (localPointerX - width * 0.5) * centerPull;
     const centerY = height * 0.5 + (localPointerY - height * 0.5) * centerPull;
@@ -1748,6 +1880,14 @@
     const fieldReveal = reducedMotion.matches ? 1 : smoothstep(0.16, 0.39, progress);
     const collapse = smoothstep(0.78, 0.955, progress);
     const particleFade = 1 - smoothstep(0.94, 1, progress) * 0.76;
+    const mobileScale = width < 700 ? 1.48 : 1;
+    const frameBands = orbitBands.map((band) => ({
+      radiusX: width * band.rx * mobileScale,
+      radiusY: height * band.ry * (width < 700 ? 0.82 : 1),
+      rotationCosine: Math.cos(band.rotation),
+      rotationSine: Math.sin(band.rotation),
+      direction: band.direction
+    }));
 
     orbitContext.save();
     orbitContext.lineCap = "round";
@@ -1755,36 +1895,38 @@
 
     for (let index = 0; index < orbitParticles.length; index += 1) {
       const particle = orbitParticles[index];
-      const band = orbitBands[particle.band];
-      const mobileScale = width < 700 ? 1.48 : 1;
-      const radiusX = width * band.rx * mobileScale * particle.radiusJitter;
-      const radiusY = height * band.ry * (width < 700 ? 0.82 : 1) * particle.radiusJitter;
+      const frameBand = frameBands[particle.band];
+      const radiusX = frameBand.radiusX * particle.radiusJitter;
+      const radiusY = frameBand.radiusY * particle.radiusJitter;
       const angle = particle.phase + particle.phaseOffset + seconds * particle.bandSpeed * particle.speedJitter;
       const cosine = Math.cos(angle);
       const sine = Math.sin(angle);
       const localX = cosine * radiusX;
       const localY = sine * radiusY;
-      const rotationCosine = Math.cos(band.rotation);
-      const rotationSine = Math.sin(band.rotation);
-      const orbitX = centerX + localX * rotationCosine - localY * rotationSine;
-      const orbitY = centerY + localX * rotationSine + localY * rotationCosine;
-      const launchAngle = Math.atan2(particle.oy - sourceY, particle.ox - sourceX) + capture * (1.8 + particle.depth * 1.5) * band.direction;
-      const launchDistance = Math.hypot(particle.ox - sourceX, particle.oy - sourceY) * (1 - capture * 0.58);
+      const orbitX = centerX + localX * frameBand.rotationCosine - localY * frameBand.rotationSine;
+      const orbitY = centerY + localX * frameBand.rotationSine + localY * frameBand.rotationCosine;
+      const launchAngle = particle.launchAngle + capture * (1.8 + particle.depth * 1.5) * frameBand.direction;
+      const launchDistance = particle.launchDistance * (1 - capture * 0.58);
       const spiralX = sourceX + Math.cos(launchAngle) * launchDistance;
       const spiralY = sourceY + Math.sin(launchAngle) * launchDistance * 0.72;
       let targetX = mix(spiralX, orbitX, capture);
       let targetY = mix(spiralY, orbitY, capture);
 
-      const pointerDx = localPointerX - targetX;
-      const pointerDy = localPointerY - targetY;
-      const pointerDistance = Math.hypot(pointerDx, pointerDy) || 1;
-      const pointerField = pointerEnabled ? smoothstep(250, 22, pointerDistance) * (1 - collapse) : 0;
-      targetX += pointerDx * pointerField * 0.075;
-      targetY += pointerDy * pointerField * 0.075;
+      let pointerField = 0;
+      if (pointerEnabled) {
+        const pointerDx = localPointerX - targetX;
+        const pointerDy = localPointerY - targetY;
+        const pointerDistanceSquared = pointerDx * pointerDx + pointerDy * pointerDy;
+        if (pointerDistanceSquared < 62500) {
+          pointerField = smoothstep(250, 22, Math.sqrt(pointerDistanceSquared)) * (1 - collapse);
+          targetX += pointerDx * pointerField * 0.075;
+          targetY += pointerDy * pointerField * 0.075;
+        }
+      }
 
       if (collapse > 0) {
         const collapseRadius = mix(34 + particle.depth * 72, 3 + particle.depth * 8, collapse);
-        const collapseAngle = particle.phase + collapse * 3.2 * band.direction;
+        const collapseAngle = particle.phase + collapse * 3.2 * frameBand.direction;
         const collapsedX = orbitLogoTarget.x + Math.cos(collapseAngle) * collapseRadius;
         const collapsedY = orbitLogoTarget.y + Math.sin(collapseAngle) * collapseRadius * 0.64;
         targetX = mix(targetX, collapsedX, collapse);
@@ -1883,10 +2025,9 @@
     const mode = Math.floor(rawMode);
     const nextMode = Math.min(3, mode + 1);
     const modeBlend = smoothstep(0.58, 0.96, rawMode - mode);
-    const stageRect = workStage.getBoundingClientRect();
-    const stagePinned = stageRect.top <= 1 && stageRect.bottom >= height - 1;
-    const localPointerX = pointer.x - stageRect.left;
-    const localPointerY = pointer.y - stageRect.top;
+    const stagePinned = targetWorkScroll > 0.002 && targetWorkScroll < 0.998;
+    const localPointerX = pointer.x;
+    const localPointerY = pointer.y;
     const pointerEnabled = stagePinned && pointer.active && finePointer.matches && !reducedMotion.matches;
     const contentReveal = smoothstep(0.14, 0.3, progress);
 
@@ -1962,6 +2103,71 @@
     workContext.restore();
   }
 
+  function stopWheelScroll(syncToWindow = true) {
+    if (wheelScrollTimer) clearTimeout(wheelScrollTimer);
+    wheelScrollTimer = 0;
+    if (syncToWindow && wheelScrollActive) {
+      window.scrollTo({ top: window.scrollY, behavior: "instant" });
+    }
+    wheelScrollActive = false;
+    wheelScrollTarget = window.scrollY;
+  }
+
+  function usesNestedScroller(target, delta) {
+    let element = target instanceof Element ? target : null;
+    while (element && element !== body && element !== document.documentElement) {
+      const style = getComputedStyle(element);
+      const scrollable = /(auto|scroll)/.test(style.overflowY)
+        && element.scrollHeight > element.clientHeight + 1;
+      if (scrollable) {
+        const canMoveUp = delta < 0 && element.scrollTop > 0;
+        const canMoveDown = delta > 0
+          && element.scrollTop + element.clientHeight < element.scrollHeight - 1;
+        if (canMoveUp || canMoveDown) return true;
+      }
+      element = element.parentElement;
+    }
+    return false;
+  }
+
+  function onWheel(event) {
+    if (
+      event.ctrlKey
+      || event.defaultPrevented
+      || reducedMotion.matches
+      || navigationOpen
+      || motionQuality === "low"
+      || width <= 700
+    ) return;
+
+    const modeScale = event.deltaMode === WheelEvent.DOM_DELTA_LINE
+      ? 18
+      : event.deltaMode === WheelEvent.DOM_DELTA_PAGE
+        ? height * 0.86
+        : 1;
+    const rawDelta = event.deltaY * modeScale;
+    const coarseWheel = event.deltaMode !== WheelEvent.DOM_DELTA_PIXEL || Math.abs(rawDelta) >= 36;
+    if (!coarseWheel || usesNestedScroller(event.target, rawDelta)) {
+      if (wheelScrollActive) stopWheelScroll(true);
+      return;
+    }
+
+    event.preventDefault();
+    const maximumScroll = Math.max(0, document.documentElement.scrollHeight - height);
+    if (!wheelScrollActive) {
+      wheelScrollTarget = window.scrollY;
+      wheelScrollActive = true;
+    }
+    wheelScrollTarget = clamp(wheelScrollTarget + clamp(rawDelta, -240, 240), 0, maximumScroll);
+    window.scrollTo({ top: wheelScrollTarget, behavior: "smooth" });
+    if (wheelScrollTimer) clearTimeout(wheelScrollTimer);
+    wheelScrollTimer = setTimeout(() => {
+      wheelScrollTimer = 0;
+      wheelScrollActive = false;
+      wheelScrollTarget = window.scrollY;
+    }, 420);
+  }
+
   function render(now) {
     rafId = 0;
     if (!pageVisible) return;
@@ -1984,15 +2190,18 @@
       || now - lastCanvasFrame >= canvasInterval;
 
     if (!reducedMotion.matches) updatePointer(now);
-    updateDocumentMotion();
+    updateDocumentMotion(frameDelta);
 
     if (shouldDrawCanvas) {
       lastCanvasFrame = now;
 
       if (heroVisible) {
+        const ambientInterval = activelyScrolling
+          ? qualityProfile.scrollingCanvasInterval
+          : qualityProfile.ambientInterval;
         const shouldDrawAmbient = reducedMotion.matches
           || !lastAmbientFrame
-          || now - lastAmbientFrame >= qualityProfile.ambientInterval;
+          || now - lastAmbientFrame >= ambientInterval;
 
         if (shouldDrawAmbient) {
           lastAmbientFrame = now;
@@ -2000,12 +2209,11 @@
 
           if (reducedMotion.matches) {
             drawStaticField(12, smoothScroll);
-            drawFragments(12, smoothScroll);
             drawSwarm(12, smoothScroll);
             drawFilaments(12, smoothScroll);
           } else {
             drawStaticField(seconds, smoothScroll);
-            drawFragments(seconds, smoothScroll);
+            if (!activelyScrolling && motionQuality === "high") drawFragments(seconds, smoothScroll);
             drawSwarm(seconds, smoothScroll);
             drawFilaments(seconds, smoothScroll);
           }
@@ -2113,12 +2321,21 @@
     });
   }
 
-  window.addEventListener("resize", () => { resize(); requestRender(); }, { passive: true });
+  window.addEventListener("resize", () => {
+    stopWheelScroll(true);
+    resize();
+    requestRender();
+  }, { passive: true });
   window.addEventListener("scroll", () => {
+    if (!wheelScrollActive) {
+      wheelScrollTarget = window.scrollY;
+    }
     lastScrollActivity = performance.now();
     updateScrollTarget();
     requestRender();
   }, { passive: true });
+  window.addEventListener("wheel", onWheel, { passive: false });
+  window.addEventListener("touchstart", () => stopWheelScroll(true), { passive: true });
   window.addEventListener("pointermove", onPointerMove, { passive: true });
   document.documentElement.addEventListener("pointerleave", onPointerLeave);
   document.addEventListener("visibilitychange", onVisibilityChange);

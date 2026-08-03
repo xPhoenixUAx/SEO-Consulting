@@ -59,11 +59,11 @@
     banner.innerHTML = `
       <div class="cookie-consent__meta">
         <span>${escapeHtml(config.cookieBannerEyebrow || "PRIVACY / YOUR CONTROL")}</span>
-        <span>${escapeHtml(config.cookieBannerStatus || "CONSENT SIGNAL")}</span>
+        <span>${escapeHtml(config.cookieBannerStatus || "COOKIE PREFERENCES")}</span>
       </div>
       <div class="cookie-consent__statement">
-        <h2 id="cookie-consent-title">${escapeHtml(config.cookieBannerTitle || "YOUR CHOICE. YOUR SIGNAL.")}</h2>
-        <p>${escapeHtml(config.cookieBannerText || "We use necessary browser storage to remember your choices. Optional analytics can be activated only when you allow them.")} <a href="${escapeHtml(policyHref)}">${escapeHtml(config.cookieBannerPolicyLabel || "Read the Cookies Policy")}</a>.</p>
+        <h2 id="cookie-consent-title">${escapeHtml(config.cookieBannerTitle || "YOUR CHOICE. YOUR PRIVACY.")}</h2>
+        <p>${escapeHtml(config.cookieBannerText || "We use browser storage to remember your cookie choice. Analytics stays off unless you choose to allow it.")} <a href="${escapeHtml(policyHref)}">${escapeHtml(config.cookieBannerPolicyLabel || "Read the Cookies Policy")}</a>.</p>
       </div>
       <div class="cookie-consent__actions">
         <button class="cookie-consent__button cookie-consent__button--primary" type="button" data-consent="all">${escapeHtml(config.cookieBannerAccept || "ACCEPT ALL")}</button>
@@ -71,16 +71,16 @@
         <button class="cookie-consent__button cookie-consent__button--manage" type="button" aria-expanded="false" aria-controls="cookie-preferences" data-consent="manage">${escapeHtml(config.cookieBannerManage || "MANAGE SETTINGS")}</button>
       </div>
       <div class="cookie-consent__preferences" id="cookie-preferences" aria-hidden="true" inert>
-        <h3>${escapeHtml(config.cookiePreferencesTitle || "CONTROL THE SIGNAL.")}</h3>
+        <h3>${escapeHtml(config.cookiePreferencesTitle || "CHOOSE WHAT WE CAN USE.")}</h3>
         <label class="cookie-consent__category">
           <input type="checkbox" checked disabled>
           <span class="cookie-consent__switch" aria-hidden="true"></span>
-          <span><strong>${escapeHtml(config.cookieNecessaryTitle || "NECESSARY")}</strong><small>${escapeHtml(config.cookieNecessaryText || "Required to remember privacy choices and keep the site working.")}</small></span>
+          <span><strong>${escapeHtml(config.cookieNecessaryTitle || "NECESSARY")}</strong><small>${escapeHtml(config.cookieNecessaryText || "Used to remember your privacy choice and keep the site working.")}</small></span>
         </label>
         <label class="cookie-consent__category">
           <input id="cookie-analytics" type="checkbox">
           <span class="cookie-consent__switch" aria-hidden="true"></span>
-          <span><strong>${escapeHtml(config.cookieAnalyticsTitle || "ANALYTICS")}</strong><small>${escapeHtml(config.cookieAnalyticsText || "Allows anonymous measurement when an analytics service is configured.")}</small></span>
+          <span><strong>${escapeHtml(config.cookieAnalyticsTitle || "ANALYTICS")}</strong><small>${escapeHtml(config.cookieAnalyticsText || "Allows anonymous traffic measurement if analytics is enabled on the site.")}</small></span>
         </label>
         <button class="cookie-consent__button cookie-consent__button--primary cookie-consent__save" type="button" data-consent="save">${escapeHtml(config.cookieBannerSave || "SAVE CHOICES")}</button>
       </div>`;

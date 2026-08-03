@@ -24,12 +24,22 @@
     return href.startsWith("#") ? `index.html${href}` : href;
   }
 
+  function getLogoParts() {
+    const raw = String(config.logoMark || "OR/BIT").trim();
+    const separator = raw.indexOf("/");
+    return {
+      top: (separator >= 0 ? raw.slice(0, separator) : raw).trim() || "OR",
+      bottom: (separator >= 0 ? raw.slice(separator + 1) : "BIT").trim() || "BIT"
+    };
+  }
+
   function buildUnifiedHeader() {
     if (!header) {
       header = document.createElement("header");
       body.insertBefore(header, body.firstChild);
     }
 
+    const logo = getLogoParts();
     const navItems = [
       ["navDiscoverLabel", "navDiscoverHref", "HOME PAGE"],
       ["navWorkLabel", "navWorkHref", "THE WORK"],
@@ -68,7 +78,7 @@
         <span class="unified-header__status">${escapeHtml(config.navStatus || "SEARCH SYSTEMS / 2026")}</span>
       </div>
       <button class="unified-header__trigger" id="unified-nav-toggle" type="button" aria-expanded="false" aria-controls="unified-site-navigation" aria-label="Open navigation">
-        <span class="brand-mark" aria-hidden="true"><span class="brand-mark__row brand-mark__row--top">OR/</span><span class="brand-mark__row brand-mark__row--bottom">BIT</span><i class="brand-mark__accent"></i></span>
+        <span class="brand-mark" aria-hidden="true"><span class="brand-mark__row brand-mark__row--top">${escapeHtml(logo.top)}/</span><span class="brand-mark__row brand-mark__row--bottom">${escapeHtml(logo.bottom)}</span><i class="brand-mark__accent"></i></span>
         <span class="brand__type unified-header__type" aria-hidden="true"><strong>${escapeHtml(config.brandName || "ORBIT")}</strong><small>${escapeHtml(config.brandDescriptor || "SEO CONSULTING")}</small></span>
       </button>
       <span class="unified-header__trace" aria-hidden="true"></span>
