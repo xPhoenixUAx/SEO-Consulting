@@ -74,6 +74,86 @@
     </div>`;
   }
 
+  function buildUnifiedFooter() {
+    let footer = document.querySelector("body > footer");
+    if (!footer) {
+      footer = document.createElement("footer");
+      const firstScript = Array.from(body.children).find((element) => element.tagName === "SCRIPT");
+      body.insertBefore(footer, firstScript || null);
+    }
+
+    if (!document.getElementById("top")) body.id = "top";
+
+    const exploreItems = [
+      ["navWorkLabel", "navWorkHref", "THE WORK", "#work"],
+      ["navServicesLabel", "navServicesHref", "SERVICES", "#services"],
+      ["navProofLabel", "navProofHref", "EVIDENCE", "#proof"],
+      ["navEngagementLabel", "navEngagementHref", "WAYS TO WORK", "#engagement"],
+      ["navMethodLabel", "navMethodHref", "90 DAYS", "#process"],
+      ["navInsightsLabel", "navInsightsHref", "INSIGHTS", "#insights"],
+      ["navFaqLabel", "navFaqHref", "FAQ", "#faq"],
+      ["navAboutLabel", "navAboutHref", "ABOUT", "#about"],
+      ["navContactLabel", "navContactHref", "CONTACT", "contact.html"]
+    ];
+    const serviceItems = [
+      ["footerAuditLabel", "auditPageHref", "AUDIT & TECHNICAL SEO", "audit-technical-seo.html"],
+      ["footerContentLabel", "contentPageHref", "CONTENT STRATEGY", "content-strategy.html"],
+      ["footerAuthorityLabel", "authorityPageHref", "AUTHORITY & GROWTH", "authority-growth.html"]
+    ];
+    const legalItems = [
+      ["privacyPolicyLabel", "privacyPolicyHref", "PRIVACY POLICY", "privacy-policy.html"],
+      ["cookiesPolicyLabel", "cookiesPolicyHref", "COOKIES POLICY", "cookies-policy.html"],
+      ["termsOfServiceLabel", "termsOfServiceHref", "TERMS OF SERVICE", "terms-of-service.html"]
+    ];
+    const currentFile = location.pathname.split("/").pop() || "index.html";
+    const renderLinks = (items, returnHome = false) => items.map(([labelKey, hrefKey, fallbackLabel, fallbackHref]) => {
+      const configuredHref = config[hrefKey] || fallbackHref;
+      const href = returnHome ? homeHref(configuredHref, fallbackHref) : configuredHref;
+      const current = href.split("#")[0] === currentFile ? ' aria-current="page"' : "";
+      return `<a href="${escapeHtml(href)}"${current} data-config="${escapeHtml(labelKey)}">${escapeHtml(config[labelKey] || fallbackLabel)}</a>`;
+    }).join("");
+
+    footer.className = "site-footer";
+    footer.id = "site-footer";
+    footer.dataset.theme = "light";
+    footer.setAttribute("aria-labelledby", "site-footer-title");
+    footer.innerHTML = `<div class="site-footer__statement">
+      <div>
+        <p data-config="footerEyebrow">${escapeHtml(config.footerEyebrow || "ORBIT / SEO CONSULTING")}</p>
+        <h2 id="site-footer-title">
+          <span data-config="footerTitleOne">${escapeHtml(config.footerTitleOne || "BE FOUND.")}</span>
+          <strong data-config="footerTitleTwo">${escapeHtml(config.footerTitleTwo || "STAY UNDERSTOOD.")}</strong>
+        </h2>
+      </div>
+      <a class="site-footer__cta" href="${escapeHtml(homeHref(config.footerCtaHref, "contact.html"))}">
+        <span data-config="footerCtaLabel">${escapeHtml(config.footerCtaLabel || "START A CONVERSATION")}</span>
+        <i data-lucide="arrow-up-right" aria-hidden="true"></i>
+      </a>
+    </div>
+    <div class="site-footer__directory">
+      <nav aria-label="Footer navigation">
+        <p data-config="footerExploreLabel">${escapeHtml(config.footerExploreLabel || "EXPLORE")}</p>
+        ${renderLinks(exploreItems, true)}
+      </nav>
+      <nav aria-label="Service pages">
+        <p data-config="footerServicesLabel">${escapeHtml(config.footerServicesLabel || "SERVICES")}</p>
+        ${renderLinks(serviceItems)}
+      </nav>
+      <address>
+        <p data-config="footerContactLabel">${escapeHtml(config.footerContactLabel || "CONTACT")}</p>
+        <strong data-config="companyName">${escapeHtml(config.companyName || "ORBIT SEO CONSULTING")}</strong>
+        <span data-config="companyAddress">${escapeHtml(config.companyAddress || "WARSAW, POLAND")}</span>
+        <a href="${escapeHtml(config.corporateEmailHref || "mailto:hello@orbit-seo.com")}" data-config="corporateEmail">${escapeHtml(config.corporateEmail || "HELLO@ORBIT-SEO.COM")}</a>
+      </address>
+    </div>
+    <div class="site-footer__bottom">
+      <span data-config="footerLegal">${escapeHtml(config.footerLegal || "© 2026 ORBIT SEO CONSULTING")}</span>
+      <span data-config="footerPrinciple">${escapeHtml(config.footerPrinciple || "NO GUARANTEED RANKINGS / ONLY ACCOUNTABLE WORK")}</span>
+      <nav class="site-footer__legal" aria-label="Legal pages">${renderLinks(legalItems)}</nav>
+      <a href="#top"><span data-config="footerBackToTop">${escapeHtml(config.footerBackToTop || "BACK TO THE TOP")}</span><i data-lucide="arrow-up" aria-hidden="true"></i></a>
+    </div>`;
+  }
+
   function applyConfig() {
     document.querySelectorAll("[data-config]").forEach((element) => {
       const value = config[element.dataset.config];
@@ -309,6 +389,7 @@
   }
 
   buildUnifiedHeader();
+  buildUnifiedFooter();
   applyConfig();
   setupIcons();
   setupActiveHeaderNavigation();
