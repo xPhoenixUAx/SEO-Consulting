@@ -54,6 +54,50 @@
   const cursorElement = document.getElementById("cursor");
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)");
+  const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  const qualityProfiles = {
+    high: {
+      density: 1,
+      staticDensity: 1,
+      desktopDpr: 1.32,
+      mobileDpr: 1.15,
+      canvasInterval: 12,
+      ambientInterval: 22,
+      scrollingCanvasInterval: 42
+    },
+    balanced: {
+      density: 0.64,
+      staticDensity: 0.68,
+      desktopDpr: 1.12,
+      mobileDpr: 1.05,
+      canvasInterval: 23,
+      ambientInterval: 30,
+      scrollingCanvasInterval: 56
+    },
+    low: {
+      density: 0.48,
+      staticDensity: 0.52,
+      desktopDpr: 1,
+      mobileDpr: 1,
+      canvasInterval: 32,
+      ambientInterval: 46,
+      scrollingCanvasInterval: 72
+    }
+  };
+  const qualityOrder = ["high", "balanced", "low"];
+  const reportedMemory = Number(navigator.deviceMemory || 0);
+  const reportedCores = Number(navigator.hardwareConcurrency || 0);
+  const initialQuality = (() => {
+    if (connection?.saveData) return "low";
+    if ((reportedMemory > 0 && reportedMemory <= 4) || (reportedCores > 0 && reportedCores <= 4)) return "low";
+    if ((reportedMemory > 0 && reportedMemory < 8) || (reportedCores > 0 && reportedCores < 8)) return "balanced";
+    if (!reportedMemory && !reportedCores) return "balanced";
+    return "high";
+  })();
+  let motionQuality = initialQuality;
+  let qualityProfile = qualityProfiles[motionQuality];
+  root.dataset.motionQuality = motionQuality;
+  root.dataset.scrollQuality = motionQuality;
   const words = [
     "search", "intent", "index", "relevance", "signal", "query", "authority",
     "content", "context", "crawl", "trust", "brand", "algorithm", "semantic",
@@ -80,6 +124,14 @@
   let rafId = 0;
   let startTime = 0;
   let lastFrame = 0;
+  let lastCanvasFrame = 0;
+  let lastAmbientFrame = 0;
+  let lastScrollActivity = -Infinity;
+  let performanceWindowStart = 0;
+  let performanceFrameTotal = 0;
+  let performanceFrameCount = 0;
+  let performanceLongFrames = 0;
+  let qualityChangePending = false;
   let targetScroll = 0;
   let smoothScroll = 0;
   let targetSceneScroll = 0;
@@ -198,6 +250,14 @@
     return amount * amount * (3 - 2 * amount);
   }
 
+  function mapOrbitProgress(progress) {
+    const holdStart = 0.62;
+    const holdEnd = 0.78;
+    if (progress <= holdStart) return progress;
+    if (progress < holdEnd) return holdStart;
+    return holdStart + ((progress - holdEnd) / (1 - holdEnd)) * (1 - holdStart);
+  }
+
   function mulberry32(seed) {
     return function random() {
       let value = seed += 0x6D2B79F5;
@@ -248,14 +308,79 @@
     return points;
   }
 
+  function scaledParticleCount(base, minimum) {
+    return Math.max(minimum, Math.round(base * qualityProfile.density));
+  }
+
+  function scaledHeroCount(base, minimum) {
+    const heroMultiplier = motionQuality === "high" ? 0.76 : 1;
+    return scaledParticleCount(base * heroMultiplier, minimum);
+  }
+
+  function resetPerformanceWindow(now = 0) {
+    performanceWindowStart = now;
+    performanceFrameTotal = 0;
+    performanceFrameCount = 0;
+    performanceLongFrames = 0;
+  }
+
+  function scheduleQualityDowngrade() {
+    if (qualityChangePending || motionQuality === "low") return;
+    const nextQuality = qualityOrder[qualityOrder.indexOf(motionQuality) + 1];
+    if (!nextQuality) return;
+
+    motionQuality = nextQuality;
+    qualityProfile = qualityProfiles[motionQuality];
+    root.dataset.motionQuality = motionQuality;
+    qualityChangePending = true;
+    resetPerformanceWindow();
+
+    setTimeout(() => {
+      resize();
+      lastCanvasFrame = 0;
+      qualityChangePending = false;
+      requestRender();
+    }, 0);
+  }
+
+  function monitorRuntimePerformance(now, frameDelta, animatedSceneVisible) {
+    if (
+      reducedMotion.matches
+      || navigationOpen
+      || qualityChangePending
+      || !animatedSceneVisible
+      || now - startTime < 1400
+    ) {
+      resetPerformanceWindow();
+      return;
+    }
+
+    if (!performanceWindowStart) performanceWindowStart = now;
+    if (frameDelta > 0 && frameDelta < 250) {
+      performanceFrameTotal += frameDelta;
+      performanceFrameCount += 1;
+      if (frameDelta > 32) performanceLongFrames += 1;
+    }
+
+    if (now - performanceWindowStart < 1600 || performanceFrameCount < 20) return;
+
+    const averageFrame = performanceFrameTotal / performanceFrameCount;
+    const longFrameRatio = performanceLongFrames / performanceFrameCount;
+    const shouldDowngrade = motionQuality === "high"
+      ? averageFrame > 22 || longFrameRatio > 0.16
+      : averageFrame > 34 || longFrameRatio > 0.38;
+
+    resetPerformanceWindow(now);
+    if (shouldDowngrade) scheduleQualityDowngrade();
+  }
+
   function buildField() {
     const random = mulberry32(7142026);
     const edgePoints = sampleTextEdges();
     const isMobile = width < 700;
-    const memory = navigator.deviceMemory || 8;
     const targetCount = reducedMotion.matches
       ? Math.min(130, edgePoints.length)
-      : Math.min(edgePoints.length, isMobile ? 300 : memory <= 4 ? 520 : 680);
+      : Math.min(edgePoints.length, scaledHeroCount(isMobile ? 300 : 680, isMobile ? 150 : 280));
 
     particles = new Array(targetCount);
     for (let index = 0; index < targetCount; index += 1) {
@@ -291,7 +416,7 @@
 
     const swarmCount = reducedMotion.matches
       ? isMobile ? 280 : 520
-      : isMobile ? 310 : memory <= 4 ? 420 : 520;
+      : scaledHeroCount(isMobile ? 310 : 520, isMobile ? 160 : 240);
     swarm = new Array(swarmCount);
     for (let index = 0; index < swarmCount; index += 1) {
       const familyRoll = random();
@@ -315,7 +440,9 @@
       };
     }
 
-    const fragmentCount = reducedMotion.matches ? 24 : isMobile ? 42 : 72;
+    const fragmentCount = reducedMotion.matches
+      ? 24
+      : scaledHeroCount(isMobile ? 42 : 72, isMobile ? 24 : 34);
     fragments = new Array(fragmentCount);
     for (let index = 0; index < fragmentCount; index += 1) {
       const label = random() > 0.6 ? words[Math.floor(random() * words.length)] : String.fromCharCode(97 + Math.floor(random() * 26));
@@ -389,10 +516,9 @@
     const random = mulberry32(28082026);
     const edgePoints = sampleSemanticEdges();
     const isMobile = width < 700;
-    const memory = navigator.deviceMemory || 8;
     const count = reducedMotion.matches
       ? isMobile ? 150 : 230
-      : isMobile ? 520 : memory <= 4 ? 720 : 1080;
+      : scaledParticleCount(isMobile ? 520 : 1080, isMobile ? 250 : 420);
 
     semanticParticles = new Array(count);
     for (let index = 0; index < count; index += 1) {
@@ -426,10 +552,9 @@
     if (!orbitStage) return;
     const random = mulberry32(31082026);
     const isMobile = width < 700;
-    const memory = navigator.deviceMemory || 8;
     const count = reducedMotion.matches
       ? isMobile ? 210 : 320
-      : isMobile ? 640 : memory <= 4 ? 860 : 1320;
+      : scaledParticleCount(isMobile ? 640 : 1320, isMobile ? 310 : 520);
     const sourceX = width * (isMobile ? 0.95 : 0.92);
     const sourceY = height * (isMobile ? 0.35 : 0.45);
 
@@ -469,10 +594,9 @@
     if (!workStage) return;
     const random = mulberry32(4082026);
     const isMobile = width < 700;
-    const memory = navigator.deviceMemory || 8;
     const count = reducedMotion.matches
       ? isMobile ? 90 : 140
-      : isMobile ? 260 : memory <= 4 ? 360 : 520;
+      : scaledParticleCount(isMobile ? 260 : 520, isMobile ? 130 : 220);
 
     workParticles = new Array(count);
     for (let index = 0; index < count; index += 1) {
@@ -501,7 +625,8 @@
   function resize() {
     width = window.innerWidth;
     height = window.innerHeight;
-    dpr = Math.min(window.devicePixelRatio || 1, width < 700 ? 1.25 : 1.45);
+    const dprLimit = width < 700 ? qualityProfile.mobileDpr : qualityProfile.desktopDpr;
+    dpr = Math.min(window.devicePixelRatio || 1, dprLimit);
     canvas.width = Math.round(width * dpr);
     canvas.height = Math.round(height * dpr);
     ambientCanvas.width = Math.round(width * dpr);
@@ -532,6 +657,7 @@
     buildSemanticField();
     buildOrbitField();
     buildWorkField();
+    lastAmbientFrame = 0;
     updateScrollTarget();
   }
 
@@ -703,17 +829,18 @@
       term.style.transform = `translate3d(${((1 - reveal) * (index % 2 ? 28 : -28)).toFixed(2)}px, ${((1 - reveal) * 18 + drift).toFixed(2)}px, 0)`;
     });
 
-    const orbitProgress = reducedMotion.matches ? 1 : smoothOrbitScroll;
+    const orbitProgress = reducedMotion.matches ? 1 : mapOrbitProgress(smoothOrbitScroll);
     const darkReveal = reducedMotion.matches ? 1 : smoothstep(0.045, 0.275, orbitProgress);
     const eclipseReveal = reducedMotion.matches ? 1 : smoothstep(0.012, 0.285, orbitProgress);
-    const eclipseDiameter = width < 700 ? 22 : 28;
-    const eclipseMaximum = Math.hypot(width, height) * 2.2 / eclipseDiameter;
-    const eclipseScale = mix(0.72, eclipseMaximum, eclipseReveal);
+    const eclipseBaseDiameter = 640;
+    const eclipseInitialDiameter = width < 700 ? 15.84 : 20.16;
+    const eclipseMaximumScale = Math.hypot(width, height) * 2.2 / eclipseBaseDiameter;
+    const eclipseScale = mix(eclipseInitialDiameter / eclipseBaseDiameter, eclipseMaximumScale, eclipseReveal);
     const orbitTitleReveal = reducedMotion.matches ? 1 : smoothstep(0.31, 0.49, orbitProgress);
     const orbitBeReveal = reducedMotion.matches ? 1 : smoothstep(0.34, 0.49, orbitProgress);
-    const orbitWordReveal = reducedMotion.matches ? 1 : smoothstep(0.405, 0.64, orbitProgress);
+    const orbitWordReveal = reducedMotion.matches ? 1 : smoothstep(0.405, 0.6, orbitProgress);
     const orbitMetaReveal = reducedMotion.matches ? 1 : smoothstep(0.26, 0.51, orbitProgress);
-    const orbitCopyReveal = reducedMotion.matches ? 1 : smoothstep(0.67, 0.84, orbitProgress);
+    const orbitCopyReveal = reducedMotion.matches ? 1 : smoothstep(0.5, 0.6, orbitProgress);
     const orbitCrescentIn = reducedMotion.matches ? 1 : smoothstep(0.43, 0.65, orbitProgress);
     const performanceExit = reducedMotion.matches
       ? 1 - smoothstep(0.88, 0.95, targetOrbitScroll)
@@ -728,7 +855,7 @@
     const logoDetailProgress = reducedMotion.matches ? 1 : smoothstep(0.89, 0.965, orbitProgress);
     const orbitSettle = reducedMotion.matches ? performanceExit : 1 - smoothstep(0.78, 0.95, orbitProgress);
 
-    root.style.setProperty("--eclipse-scale", eclipseScale.toFixed(3));
+    root.style.setProperty("--eclipse-scale", eclipseScale.toFixed(4));
     root.style.setProperty("--orbit-dark-opacity", darkReveal.toFixed(4));
     root.style.setProperty("--orbit-title-opacity", orbitTitleReveal.toFixed(4));
     root.style.setProperty("--orbit-title-y", `${((1 - orbitTitleReveal) * 36).toFixed(2)}px`);
@@ -1131,7 +1258,11 @@
     staticContext.lineCap = "round";
 
     const isMobile = width < 700;
-    const count = isMobile ? 1580 : 4250;
+    const staticBaseCount = isMobile ? 1580 : 4250;
+    const count = Math.max(
+      isMobile ? 780 : 1900,
+      Math.round(staticBaseCount * qualityProfile.staticDensity)
+    );
     const centerX = width * (isMobile ? 0.72 : 0.69);
     const centerY = height * (isMobile ? 0.43 : 0.51);
     const ignitionX = width * (isMobile ? 0.77 : 0.79);
@@ -1599,7 +1730,7 @@
   }
 
   function drawOrbitField(seconds) {
-    const progress = reducedMotion.matches ? targetOrbitScroll : smoothOrbitScroll;
+    const progress = reducedMotion.matches ? targetOrbitScroll : mapOrbitProgress(smoothOrbitScroll);
     const visibility = reducedMotion.matches ? 1 : smoothstep(0.09, 0.32, progress);
     if (visibility < 0.002) return;
 
@@ -1836,51 +1967,76 @@
     if (!pageVisible) return;
     if (navigationOpen && width <= 820) return;
     if (!startTime) startTime = now;
-    if (now - lastFrame < 12) {
+    const frameDelta = lastFrame ? now - lastFrame : 16.67;
+    if (frameDelta < 12) {
       rafId = requestAnimationFrame(render);
       return;
     }
     lastFrame = now;
     const seconds = (now - startTime) / 1000;
+    const animatedSceneVisible = heroVisible || sceneVisible || orbitVisible || workVisible;
+    const activelyScrolling = now - lastScrollActivity < 180;
+    const canvasInterval = activelyScrolling
+      ? qualityProfile.scrollingCanvasInterval
+      : qualityProfile.canvasInterval;
+    const shouldDrawCanvas = reducedMotion.matches
+      || !lastCanvasFrame
+      || now - lastCanvasFrame >= canvasInterval;
 
     if (!reducedMotion.matches) updatePointer(now);
     updateDocumentMotion();
 
-    if (heroVisible) {
-      ambientContext.clearRect(0, 0, width, height);
-      context.clearRect(0, 0, width, height);
+    if (shouldDrawCanvas) {
+      lastCanvasFrame = now;
 
-      if (reducedMotion.matches) {
-        drawStaticField(12, smoothScroll);
-        drawFragments(12, smoothScroll);
-        drawSwarm(12, smoothScroll);
-        drawFilaments(12, smoothScroll);
-        drawParticles(12, smoothScroll);
-      } else {
-        drawStaticField(seconds, smoothScroll);
-        drawFragments(seconds, smoothScroll);
-        drawSwarm(seconds, smoothScroll);
-        drawFilaments(seconds, smoothScroll);
-        drawParticles(seconds, smoothScroll);
+      if (heroVisible) {
+        const shouldDrawAmbient = reducedMotion.matches
+          || !lastAmbientFrame
+          || now - lastAmbientFrame >= qualityProfile.ambientInterval;
+
+        if (shouldDrawAmbient) {
+          lastAmbientFrame = now;
+          ambientContext.clearRect(0, 0, width, height);
+
+          if (reducedMotion.matches) {
+            drawStaticField(12, smoothScroll);
+            drawFragments(12, smoothScroll);
+            drawSwarm(12, smoothScroll);
+            drawFilaments(12, smoothScroll);
+          } else {
+            drawStaticField(seconds, smoothScroll);
+            drawFragments(seconds, smoothScroll);
+            drawSwarm(seconds, smoothScroll);
+            drawFilaments(seconds, smoothScroll);
+          }
+        }
+
+        context.clearRect(0, 0, width, height);
+
+        if (reducedMotion.matches) {
+          drawParticles(12, smoothScroll);
+        } else {
+          drawParticles(seconds, smoothScroll);
+        }
+      }
+
+      if (sceneVisible) {
+        semanticContext.clearRect(0, 0, width, height);
+        drawSemanticField(reducedMotion.matches ? 12 : seconds);
+      }
+
+      if (orbitVisible) {
+        orbitContext.clearRect(0, 0, width, height);
+        drawOrbitField(reducedMotion.matches ? 12 : seconds);
+      }
+
+      if (workVisible) {
+        workContext.clearRect(0, 0, width, height);
+        drawWorkField(reducedMotion.matches ? 12 : seconds);
       }
     }
 
-    if (sceneVisible) {
-      semanticContext.clearRect(0, 0, width, height);
-      drawSemanticField(reducedMotion.matches ? 12 : seconds);
-    }
-
-    if (orbitVisible) {
-      orbitContext.clearRect(0, 0, width, height);
-      drawOrbitField(reducedMotion.matches ? 12 : seconds);
-    }
-
-    if (workVisible) {
-      workContext.clearRect(0, 0, width, height);
-      drawWorkField(reducedMotion.matches ? 12 : seconds);
-    }
-
-    const animatedSceneVisible = heroVisible || sceneVisible || orbitVisible || workVisible;
+    monitorRuntimePerformance(now, frameDelta, animatedSceneVisible);
     const motionIsSettling = Math.abs(targetScroll - smoothScroll) > 0.001
       || Math.abs(targetSceneScroll - smoothSceneScroll) > 0.001
       || Math.abs(targetSceneEntry - smoothSceneEntry) > 0.001
@@ -1958,7 +2114,11 @@
   }
 
   window.addEventListener("resize", () => { resize(); requestRender(); }, { passive: true });
-  window.addEventListener("scroll", () => { updateScrollTarget(); requestRender(); }, { passive: true });
+  window.addEventListener("scroll", () => {
+    lastScrollActivity = performance.now();
+    updateScrollTarget();
+    requestRender();
+  }, { passive: true });
   window.addEventListener("pointermove", onPointerMove, { passive: true });
   document.documentElement.addEventListener("pointerleave", onPointerLeave);
   document.addEventListener("visibilitychange", onVisibilityChange);
