@@ -1326,6 +1326,46 @@ button:disabled,
   height: 44px;
 }
 
+.unified-header__type {
+  position: absolute;
+  top: 50%;
+  left: 100%;
+  display: grid;
+  align-content: center;
+  gap: 4px;
+  min-height: 44px;
+  width: max-content;
+  padding: 0 15px 0 14px;
+  border-left: 1px solid rgba(240,237,228,.2);
+  background: rgba(5,5,4,.9);
+  box-shadow: 12px 10px 26px rgba(5,5,4,.12);
+  color: var(--paper);
+  text-align: left;
+  opacity: 1;
+  pointer-events: none;
+  transform: translateY(-50%);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  transition: opacity 240ms ease, transform 360ms cubic-bezier(.16,1,.3,1);
+  white-space: nowrap;
+}
+
+.unified-header__type strong {
+  font: 500 15px/1 "IBM Plex Mono", monospace;
+  letter-spacing: .24em;
+}
+
+.unified-header__type small {
+  color: rgba(240,237,228,.62);
+  font: 400 9px/1 "IBM Plex Mono", monospace;
+  letter-spacing: .17em;
+}
+
+.unified-header.is-open .unified-header__type {
+  opacity: 0;
+  transform: translate3d(-8px, -50%, 0);
+}
+
 .unified-header__trigger:hover .brand-mark__accent,
 .unified-header__trigger:focus-visible .brand-mark__accent {
   width: 17px;
@@ -1651,6 +1691,20 @@ button:disabled,
   .unified-header__trigger .brand-mark {
     width: 40px;
     height: 40px;
+  }
+
+  .unified-header__type {
+    min-height: 40px;
+    padding-right: 12px;
+    padding-left: 11px;
+  }
+
+  .unified-header__type strong {
+    font-size: 12px;
+  }
+
+  .unified-header__type small {
+    font-size: 7px;
   }
 
   .unified-header__panel {

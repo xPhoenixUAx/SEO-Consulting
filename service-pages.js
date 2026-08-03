@@ -31,7 +31,7 @@
     }
 
     const navItems = [
-      ["navDiscoverLabel", "navDiscoverHref", "OPENING"],
+      ["navDiscoverLabel", "navDiscoverHref", "HOME PAGE"],
       ["navWorkLabel", "navWorkHref", "THE WORK"],
       ["navServicesLabel", "navServicesHref", "SERVICES"],
       ["navProofLabel", "navProofHref", "EVIDENCE"],
@@ -69,6 +69,7 @@
       </div>
       <button class="unified-header__trigger" id="unified-nav-toggle" type="button" aria-expanded="false" aria-controls="unified-site-navigation" aria-label="Open navigation">
         <span class="brand-mark" aria-hidden="true"><span class="brand-mark__row brand-mark__row--top">OR/</span><span class="brand-mark__row brand-mark__row--bottom">BIT</span><i class="brand-mark__accent"></i></span>
+        <span class="brand__type unified-header__type" aria-hidden="true"><strong>${escapeHtml(config.brandName || "ORBIT")}</strong><small>${escapeHtml(config.brandDescriptor || "SEO CONSULTING")}</small></span>
       </button>
       <span class="unified-header__trace" aria-hidden="true"></span>
     </div>`;
