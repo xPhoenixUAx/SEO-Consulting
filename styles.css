@@ -1751,7 +1751,7 @@ body.is-ready .scroll-cue {
   font-size: clamp(78px, 9.1vw, 140px);
   font-stretch: 76%;
   font-weight: 900;
-  letter-spacing: -.082em;
+  letter-spacing: -.045em;
   line-height: .76;
   text-transform: uppercase;
 }
@@ -1834,7 +1834,7 @@ body.is-ready .scroll-cue {
   font-size: clamp(48px, 5.5vw, 84px);
   font-stretch: 72%;
   font-weight: 850;
-  letter-spacing: -.072em;
+  letter-spacing: -.032em;
   line-height: .88;
   word-spacing: .1em;
 }
@@ -4302,6 +4302,7 @@ body.is-light-scene .orbit-nav__hint {
   .method-section__intro h2 {
     font-size: clamp(52px, 15.2vw, 69px);
     font-stretch: 65%;
+    letter-spacing: -.022em;
     line-height: .78;
   }
 
@@ -4355,6 +4356,7 @@ body.is-light-scene .orbit-nav__hint {
     max-width: 350px;
     font-size: clamp(42px, 12.3vw, 56px);
     font-stretch: 64%;
+    letter-spacing: -.012em;
     line-height: .89;
   }
 

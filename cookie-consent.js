@@ -102,6 +102,7 @@
       manageButton.setAttribute("aria-expanded", String(open));
       preferences.setAttribute("aria-hidden", String(!open));
       preferences.inert = !open;
+      banner.scrollTop = 0;
       if (open) requestAnimationFrame(() => analyticsInput.focus({ preventScroll: true }));
     }
 
