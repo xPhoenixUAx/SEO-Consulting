@@ -854,13 +854,6 @@
     setMotionProperty("--headline-scale", (1 - smoothScroll * 0.045).toFixed(4));
     setMotionProperty("--headline-opacity", clamp(1 - smoothScroll * 0.94, 0, 1).toFixed(4));
     setMotionProperty("--atmosphere-opacity", clamp(1 - smoothScroll, 0, 1).toFixed(4));
-    setMotionProperty("--header-y", `${(-smoothScroll * 18).toFixed(2)}px`);
-    setMotionProperty("--header-opacity", clamp(1 - smoothScroll * 1.18, 0, 1).toFixed(4));
-    heroNavigationAvailable = heroVisible && targetScroll < 0.82;
-    siteHeader.classList.toggle("is-nav-available", heroNavigationAvailable);
-    heroNavToggle.tabIndex = heroNavigationAvailable ? 0 : -1;
-    heroNavToggle.setAttribute("aria-hidden", String(!heroNavigationAvailable));
-
     const sceneProgress = reducedMotion.matches ? 1 : smoothSceneScroll;
     const titleReveal = smoothstep(0.22, 0.92, smoothSceneEntry);
     const scanOne = reducedMotion.matches ? 1 : smoothstep(0.06, 0.43, sceneProgress);
@@ -991,6 +984,11 @@
 
     logoDocked = targetOrbitScroll >= (reducedMotion.matches ? 0.95 : 0.985);
     orbitNavigation.classList.toggle("is-docked", logoDocked);
+    siteHeader.classList.toggle("is-handed-off", logoDocked);
+    heroNavigationAvailable = !logoDocked;
+    siteHeader.classList.toggle("is-nav-available", heroNavigationAvailable);
+    heroNavToggle.tabIndex = heroNavigationAvailable ? 0 : -1;
+    heroNavToggle.setAttribute("aria-hidden", String(!heroNavigationAvailable));
     orbitNavToggle.tabIndex = logoDocked || navigationOpen ? 0 : -1;
     if (!logoDocked && !heroNavigationAvailable && navigationOpen) setNavigationOpen(false, false);
     body.classList.toggle("is-orbit-scene", orbitVisible && darkReveal > 0.7);

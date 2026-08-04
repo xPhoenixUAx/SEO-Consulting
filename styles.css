@@ -10,8 +10,6 @@
   --headline-scale: 1;
   --headline-opacity: 1;
   --atmosphere-opacity: 1;
-  --header-y: 0px;
-  --header-opacity: 1;
   --scene-progress: 0;
   --scene-title-y: 42px;
   --scene-copy-opacity: 0;
@@ -409,13 +407,23 @@ a {
 .site-header {
   position: fixed;
   z-index: 20;
-  inset: 27px 34px auto;
+  inset: 26px 33px auto;
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  opacity: var(--header-opacity);
+  opacity: 1;
   pointer-events: none;
-  transform: translateY(var(--header-y));
+  transform: none;
+  transition: color 220ms ease, opacity 140ms ease, visibility 0s linear 140ms;
+}
+
+.site-header.is-handed-off {
+  visibility: hidden;
+  opacity: 0;
+}
+
+.site-header.is-handed-off .brand {
+  pointer-events: none;
 }
 
 .brand {
@@ -451,6 +459,11 @@ a {
   font-weight: 900;
   line-height: .72;
   letter-spacing: -.11em;
+}
+
+.brand-mark--static {
+  width: 44px;
+  height: 44px;
 }
 
 .brand-mark__row {
@@ -545,6 +558,16 @@ a {
 
 .site-header__signal span::before {
   content: "LIVE";
+}
+
+body.is-light-scene .site-header {
+  color: var(--black);
+}
+
+body.is-light-scene .site-header .brand__type small,
+body.is-light-scene .site-header .site-header__meta,
+body.is-light-scene .site-header .site-header__signal {
+  color: rgba(5, 5, 4, 0.58);
 }
 
 .hero-track {
@@ -3870,13 +3893,13 @@ body.is-light-scene .orbit-nav__hint {
   }
 
   .site-header {
-    inset: 18px 18px auto;
+    inset: 16px 16px auto;
     grid-template-columns: 1fr auto;
   }
 
   .brand-mark--static {
-    width: 34px;
-    height: 34px;
+    width: 40px;
+    height: 40px;
   }
 
   .brand-mark--static .brand-mark__row--top,
