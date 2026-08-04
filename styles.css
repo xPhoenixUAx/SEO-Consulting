@@ -19,10 +19,10 @@
   --scene-meta-opacity: 0.18;
   --scan-one-clip: 100%;
   --scan-two-clip: 100%;
-  --scan-x: -8%;
+  --scan-x: -8vw;
   --scan-opacity: 0;
   --lens-opacity: 0;
-  --eclipse-scale: 0.0315;
+  --eclipse-radius: 10px;
   --orbit-dark-opacity: 0;
   --orbit-title-opacity: 0;
   --orbit-title-y: 36px;
@@ -604,22 +604,11 @@ a {
 
 .grain {
   z-index: 8;
-  inset: -35%;
+  inset: 0;
   pointer-events: none;
-  opacity: 0.065;
-  background-image:
-    repeating-radial-gradient(circle at 17% 21%, rgba(255,255,255,.5) 0 .45px, transparent .7px 3.5px),
-    repeating-radial-gradient(circle at 81% 63%, rgba(255,255,255,.34) 0 .5px, transparent .8px 4.5px);
-  background-size: 7px 9px, 11px 13px;
-  animation: grainShift 0.28s steps(2, end) infinite;
-}
-
-@keyframes grainShift {
-  0% { transform: translate3d(-1%, 1%, 0); }
-  25% { transform: translate3d(1%, -1%, 0); }
-  50% { transform: translate3d(0.5%, 1%, 0); }
-  75% { transform: translate3d(-0.5%, -0.5%, 0); }
-  100% { transform: translate3d(-1%, 1%, 0); }
+  opacity: 0.052;
+  background-image: url("assets/images/noise.svg");
+  background-size: 160px 160px;
 }
 
 .headline-stage {
@@ -896,18 +885,11 @@ body.is-ready .scroll-cue {
 .semantic-paper::after {
   content: "";
   position: absolute;
-  inset: -30%;
-  opacity: 0.115;
-  background-image:
-    repeating-radial-gradient(circle at 13% 27%, rgba(5,5,4,.48) 0 .42px, transparent .66px 3.8px),
-    repeating-radial-gradient(circle at 72% 61%, rgba(5,5,4,.28) 0 .46px, transparent .72px 4.7px);
-  background-size: 8px 11px, 13px 15px;
-  animation: paperShift 0.42s steps(2, end) infinite;
-}
-
-@keyframes paperShift {
-  0%, 100% { transform: translate3d(-0.3%, 0.4%, 0); }
-  50% { transform: translate3d(0.45%, -0.35%, 0); }
+  inset: 0;
+  opacity: 0.075;
+  background-image: url("assets/images/noise.svg");
+  background-size: 160px 160px;
+  mix-blend-mode: multiply;
 }
 
 .scene-two__topline {
@@ -1049,11 +1031,13 @@ body.is-ready .scroll-cue {
   position: absolute;
   z-index: 5;
   top: 12%;
-  left: var(--scan-x);
+  left: 0;
   width: 1px;
   height: 72%;
   opacity: var(--scan-opacity);
   pointer-events: none;
+  transform: translate3d(var(--scan-x), 0, 0);
+  will-change: transform, opacity;
 }
 
 .semantic-scan::before {
@@ -1152,6 +1136,8 @@ body.is-ready .scroll-cue {
 }
 
 .scene-three__stage {
+  --eclipse-x: 92%;
+  --eclipse-y: 45%;
   position: sticky;
   top: 0;
   height: 100vh;
@@ -1165,14 +1151,11 @@ body.is-ready .scroll-cue {
 .orbit-eclipse {
   position: absolute;
   z-index: 0;
-  top: 45%;
-  left: 92%;
-  width: 640px;
-  height: 640px;
-  border-radius: 50%;
+  inset: 0;
   background: var(--black);
-  transform: translate(-50%, -50%) scale(var(--eclipse-scale));
-  will-change: transform;
+  -webkit-clip-path: circle(var(--eclipse-radius) at var(--eclipse-x) var(--eclipse-y));
+  clip-path: circle(var(--eclipse-radius) at var(--eclipse-x) var(--eclipse-y));
+  will-change: clip-path;
 }
 
 .orbit-space {
@@ -1199,19 +1182,11 @@ body.is-ready .scroll-cue {
 .orbit-grain {
   position: absolute;
   z-index: 7;
-  inset: -32%;
-  opacity: calc(var(--orbit-dark-opacity) * .07);
+  inset: 0;
+  opacity: calc(var(--orbit-dark-opacity) * .052);
   pointer-events: none;
-  background-image:
-    repeating-radial-gradient(circle at 17% 21%, rgba(255,255,255,.52) 0 .42px, transparent .68px 3.6px),
-    repeating-radial-gradient(circle at 79% 64%, rgba(216,255,0,.25) 0 .45px, transparent .72px 5px);
-  background-size: 8px 10px, 13px 15px;
-  animation: orbitGrainShift .34s steps(2, end) infinite;
-}
-
-@keyframes orbitGrainShift {
-  0%, 100% { transform: translate3d(-.4%, .3%, 0); }
-  50% { transform: translate3d(.35%, -.45%, 0); }
+  background-image: url("assets/images/noise.svg");
+  background-size: 160px 160px;
 }
 
 .scene-three__topline {
@@ -1495,13 +1470,10 @@ body.is-ready .scroll-cue {
 
 .work-grain {
   z-index: 8;
-  inset: -30%;
-  opacity: .058;
-  background-image:
-    repeating-radial-gradient(circle at 21% 33%, rgba(255,255,255,.46) 0 .4px, transparent .68px 3.8px),
-    repeating-radial-gradient(circle at 73% 58%, rgba(216,255,0,.22) 0 .44px, transparent .7px 5.2px);
-  background-size: 9px 11px, 14px 16px;
-  animation: orbitGrainShift .38s steps(2, end) infinite;
+  inset: 0;
+  opacity: .048;
+  background-image: url("assets/images/noise.svg");
+  background-size: 160px 160px;
 }
 
 .scene-four__topline {
@@ -4117,8 +4089,8 @@ body.is-light-scene .orbit-nav__hint {
   }
 
   .orbit-eclipse {
-    top: 35%;
-    left: 95%;
+    --eclipse-x: 95%;
+    --eclipse-y: 35%;
   }
 
   .scene-three__topline {

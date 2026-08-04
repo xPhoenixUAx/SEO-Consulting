@@ -7,7 +7,7 @@ window.SITE_CONFIG = Object.freeze(
 {
   "siteUrl": "https://orbit-seo.com",
   "siteLanguage": "en",
-  "socialImage": "https://orbit-seo.com/assets/images/orbit-social-preview-v1.png",
+  "socialImage": "https://orbit-seo.com/assets/images/orbit-social-preview-v1.webp",
   "logoMark": "OR/BIT",
   "faviconHref": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23050504'/%3E%3Ctext x='7' y='29' fill='%23f0ede4' font-family='Arial' font-weight='900' font-size='25'%3EOR%3C/text%3E%3Ctext x='7' y='53' fill='%23f0ede4' font-family='Arial' font-weight='900' font-size='25'%3EBIT%3C/text%3E%3Crect x='49' y='55' width='9' height='3' fill='%23d8ff00'/%3E%3C/svg%3E",
   "titleSuffix": "ORBIT SEO Consulting",

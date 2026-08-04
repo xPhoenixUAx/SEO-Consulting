@@ -164,9 +164,6 @@
   let heroNavigationAvailable = true;
   let navigationScrollLocked = false;
   let navigationScrollY = 0;
-  let wheelScrollTarget = window.scrollY;
-  let wheelScrollTimer = 0;
-  let wheelScrollActive = false;
   const orbitLogoTarget = { x: window.innerWidth * 0.5, y: window.innerHeight * 0.5 };
   const motionPropertyValues = new Map();
 
@@ -828,30 +825,30 @@
     });
   }
 
-  function updateDocumentMotion(frameDelta = 16.67) {
+  function updateDocumentMotion(frameDelta = 16.67, activelyScrolling = false) {
     const frameScale = clamp(frameDelta / 16.67, 0.5, 2.5);
     const motionEase = (strength) => 1 - Math.pow(1 - strength, frameScale);
     smoothScroll = reducedMotion.matches
       ? targetScroll
-      : smoothScroll + (targetScroll - smoothScroll) * motionEase(0.14);
+      : activelyScrolling ? targetScroll : smoothScroll + (targetScroll - smoothScroll) * motionEase(0.14);
     smoothSceneScroll = reducedMotion.matches
       ? targetSceneScroll
-      : smoothSceneScroll + (targetSceneScroll - smoothSceneScroll) * motionEase(0.13);
+      : activelyScrolling ? targetSceneScroll : smoothSceneScroll + (targetSceneScroll - smoothSceneScroll) * motionEase(0.13);
     smoothSceneEntry = reducedMotion.matches
       ? targetSceneEntry
-      : smoothSceneEntry + (targetSceneEntry - smoothSceneEntry) * motionEase(0.16);
+      : activelyScrolling ? targetSceneEntry : smoothSceneEntry + (targetSceneEntry - smoothSceneEntry) * motionEase(0.16);
     smoothOrbitScroll = reducedMotion.matches
       ? targetOrbitScroll
-      : smoothOrbitScroll + (targetOrbitScroll - smoothOrbitScroll) * motionEase(0.12);
+      : activelyScrolling ? targetOrbitScroll : smoothOrbitScroll + (targetOrbitScroll - smoothOrbitScroll) * motionEase(0.12);
     smoothOrbitEntry = reducedMotion.matches
       ? targetOrbitEntry
-      : smoothOrbitEntry + (targetOrbitEntry - smoothOrbitEntry) * motionEase(0.15);
+      : activelyScrolling ? targetOrbitEntry : smoothOrbitEntry + (targetOrbitEntry - smoothOrbitEntry) * motionEase(0.15);
     smoothWorkScroll = reducedMotion.matches
       ? targetWorkScroll
-      : smoothWorkScroll + (targetWorkScroll - smoothWorkScroll) * motionEase(0.12);
+      : activelyScrolling ? targetWorkScroll : smoothWorkScroll + (targetWorkScroll - smoothWorkScroll) * motionEase(0.12);
     smoothWorkEntry = reducedMotion.matches
       ? targetWorkEntry
-      : smoothWorkEntry + (targetWorkEntry - smoothWorkEntry) * motionEase(0.15);
+      : activelyScrolling ? targetWorkEntry : smoothWorkEntry + (targetWorkEntry - smoothWorkEntry) * motionEase(0.15);
     setMotionProperty("--scroll", smoothScroll.toFixed(4));
     setMotionProperty("--headline-y", `${(-smoothScroll * 24).toFixed(3)}vh`);
     setMotionProperty("--headline-scale", (1 - smoothScroll * 0.045).toFixed(4));
@@ -882,7 +879,7 @@
     setMotionProperty("--scene-meta-opacity", metaOpacity.toFixed(4));
     setMotionProperty("--scan-one-clip", `${((1 - scanOne) * 101).toFixed(3)}%`);
     setMotionProperty("--scan-two-clip", `${((1 - scanTwo) * 101).toFixed(3)}%`);
-    setMotionProperty("--scan-x", `${(-6 + scanTravel * 112).toFixed(3)}%`);
+    setMotionProperty("--scan-x", `${(-6 + scanTravel * 112).toFixed(3)}vw`);
     setMotionProperty("--scan-opacity", scanOpacity.toFixed(4));
 
     const stagePinned = sceneVisible && targetSceneScroll > 0.002 && targetSceneScroll < 0.998;
@@ -915,10 +912,9 @@
     const orbitProgress = reducedMotion.matches ? 1 : mapOrbitProgress(smoothOrbitScroll);
     const darkReveal = reducedMotion.matches ? 1 : smoothstep(0.045, 0.275, orbitProgress);
     const eclipseReveal = reducedMotion.matches ? 1 : smoothstep(0.012, 0.285, orbitProgress);
-    const eclipseBaseDiameter = 640;
-    const eclipseInitialDiameter = width < 700 ? 15.84 : 20.16;
-    const eclipseMaximumScale = Math.hypot(width, height) * 2.2 / eclipseBaseDiameter;
-    const eclipseScale = mix(eclipseInitialDiameter / eclipseBaseDiameter, eclipseMaximumScale, eclipseReveal);
+    const eclipseInitialRadius = width < 700 ? 7.92 : 10.08;
+    const eclipseMaximumRadius = Math.hypot(width, height) * 1.12;
+    const eclipseRadius = mix(eclipseInitialRadius, eclipseMaximumRadius, eclipseReveal);
     const orbitTitleReveal = reducedMotion.matches ? 1 : smoothstep(0.31, 0.49, orbitProgress);
     const orbitBeReveal = reducedMotion.matches ? 1 : smoothstep(0.34, 0.49, orbitProgress);
     const orbitWordReveal = reducedMotion.matches ? 1 : smoothstep(0.405, 0.6, orbitProgress);
@@ -938,7 +934,7 @@
     const logoDetailProgress = reducedMotion.matches ? 1 : smoothstep(0.89, 0.965, orbitProgress);
     const orbitSettle = reducedMotion.matches ? performanceExit : 1 - smoothstep(0.78, 0.95, orbitProgress);
 
-    setMotionProperty("--eclipse-scale", eclipseScale.toFixed(4));
+    setMotionProperty("--eclipse-radius", `${eclipseRadius.toFixed(2)}px`);
     setMotionProperty("--orbit-dark-opacity", darkReveal.toFixed(4));
     setMotionProperty("--orbit-title-opacity", orbitTitleReveal.toFixed(4));
     setMotionProperty("--orbit-title-y", `${((1 - orbitTitleReveal) * 36).toFixed(2)}px`);
@@ -1291,7 +1287,6 @@
   }
 
   function onNavigationPointerDown(event) {
-    if (wheelScrollActive) stopWheelScroll(true);
     if (navigationOpen && !orbitNavigation.contains(event.target)) {
       setNavigationOpen(false, false);
     }
@@ -2103,71 +2098,6 @@
     workContext.restore();
   }
 
-  function stopWheelScroll(syncToWindow = true) {
-    if (wheelScrollTimer) clearTimeout(wheelScrollTimer);
-    wheelScrollTimer = 0;
-    if (syncToWindow && wheelScrollActive) {
-      window.scrollTo({ top: window.scrollY, behavior: "instant" });
-    }
-    wheelScrollActive = false;
-    wheelScrollTarget = window.scrollY;
-  }
-
-  function usesNestedScroller(target, delta) {
-    let element = target instanceof Element ? target : null;
-    while (element && element !== body && element !== document.documentElement) {
-      const style = getComputedStyle(element);
-      const scrollable = /(auto|scroll)/.test(style.overflowY)
-        && element.scrollHeight > element.clientHeight + 1;
-      if (scrollable) {
-        const canMoveUp = delta < 0 && element.scrollTop > 0;
-        const canMoveDown = delta > 0
-          && element.scrollTop + element.clientHeight < element.scrollHeight - 1;
-        if (canMoveUp || canMoveDown) return true;
-      }
-      element = element.parentElement;
-    }
-    return false;
-  }
-
-  function onWheel(event) {
-    if (
-      event.ctrlKey
-      || event.defaultPrevented
-      || reducedMotion.matches
-      || navigationOpen
-      || motionQuality === "low"
-      || width <= 700
-    ) return;
-
-    const modeScale = event.deltaMode === WheelEvent.DOM_DELTA_LINE
-      ? 18
-      : event.deltaMode === WheelEvent.DOM_DELTA_PAGE
-        ? height * 0.86
-        : 1;
-    const rawDelta = event.deltaY * modeScale;
-    const coarseWheel = event.deltaMode !== WheelEvent.DOM_DELTA_PIXEL || Math.abs(rawDelta) >= 36;
-    if (!coarseWheel || usesNestedScroller(event.target, rawDelta)) {
-      if (wheelScrollActive) stopWheelScroll(true);
-      return;
-    }
-
-    event.preventDefault();
-    const maximumScroll = Math.max(0, document.documentElement.scrollHeight - height);
-    if (!wheelScrollActive) {
-      wheelScrollTarget = window.scrollY;
-      wheelScrollActive = true;
-    }
-    wheelScrollTarget = clamp(wheelScrollTarget + clamp(rawDelta, -240, 240), 0, maximumScroll);
-    window.scrollTo({ top: wheelScrollTarget, behavior: "smooth" });
-    if (wheelScrollTimer) clearTimeout(wheelScrollTimer);
-    wheelScrollTimer = setTimeout(() => {
-      wheelScrollTimer = 0;
-      wheelScrollActive = false;
-      wheelScrollTarget = window.scrollY;
-    }, 420);
-  }
-
   function render(now) {
     rafId = 0;
     if (!pageVisible) return;
@@ -2190,7 +2120,7 @@
       || now - lastCanvasFrame >= canvasInterval;
 
     if (!reducedMotion.matches) updatePointer(now);
-    updateDocumentMotion(frameDelta);
+    updateDocumentMotion(frameDelta, activelyScrolling);
 
     if (shouldDrawCanvas) {
       lastCanvasFrame = now;
@@ -2322,20 +2252,14 @@
   }
 
   window.addEventListener("resize", () => {
-    stopWheelScroll(true);
     resize();
     requestRender();
   }, { passive: true });
   window.addEventListener("scroll", () => {
-    if (!wheelScrollActive) {
-      wheelScrollTarget = window.scrollY;
-    }
     lastScrollActivity = performance.now();
     updateScrollTarget();
     requestRender();
   }, { passive: true });
-  window.addEventListener("wheel", onWheel, { passive: false });
-  window.addEventListener("touchstart", () => stopWheelScroll(true), { passive: true });
   window.addEventListener("pointermove", onPointerMove, { passive: true });
   document.documentElement.addEventListener("pointerleave", onPointerLeave);
   document.addEventListener("visibilitychange", onVisibilityChange);
